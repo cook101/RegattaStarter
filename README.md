@@ -1,2 +1,2 @@
-# regattahorn
-Regatta countdown timer with horn
+# Regatta Horn
+Arduino-based regatta countdown timer with horn
