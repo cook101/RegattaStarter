@@ -13,10 +13,9 @@
 
 #include <LiquidCrystal.h>
 
-LiquidCrystal lcd(8, 9, 4, 5, 6, 7); // select the pins used on the LCD panel
 
 
-// Constants
+/***  Constants  ***/
 
 const int NUM_SEQ = 4;  // Number of menu options
 
@@ -41,15 +40,18 @@ const int STD_DELAY = 300; // (ms)
 const unsigned long len_of_note[] = {500, 400, 800, 1500}; // (ms)
 
 // Messages (LCD is 2x16 characters)
-const char* STARTING_MSG = " ...STARTING... ";
-const char* JASC_5_MSG   = "JASC 1x5 min    ";
-const char* JASC_3_MSG   = "JASC 1x3 min    ";
-const char* DOSC_1x5_MSG = "DOSC 1x5 min    ";
-const char* DOSC_3x5_MSG = "DOSC 3x5 min    ";
-const char* DOSC_3x5_ALT_MSG = "DOSC ROLLING 3x5";
-const char* EMPTY_MSG    = "                ";
-const char* BEG_TIME_MSG = "00:00           ";
-const char* CANCEL_MSG   = "SEQ. CANCELLED  ";
+const char* const STARTING_MSG = " ...STARTING... ";
+const char* const JASC_5_MSG   = "JASC 1x5 min    ";
+const char* const JASC_3_MSG   = "JASC 1x3 min    ";
+const char* const DOSC_1x5_MSG = "DOSC 1x5 min    ";
+const char* const DOSC_3x5_MSG = "DOSC 3x5 min    ";
+const char* const DOSC_3x5_ALT_MSG = "DOSC ROLLING 3x5";
+const char* const EMPTY_MSG    = "                ";
+const char* const BEG_TIME_MSG = "00:00           ";
+const char* const CANCEL_MSG   = "SEQ. CANCELLED  ";
+const char* const HORN_ON_MSG = "H";
+const char* const BEEP_ON_MSG = "B";
+const char* const SOUND_OFF_MSG = " ";
 
 
 // Horn sequences
@@ -75,7 +77,7 @@ const int h_or_b3[] = {        3,   1,1,1,1,1,
                             2,2,0,0,0,0,0,
                             2,2,2,   1,1,1,1,1,      0, 0, 0, 0, 0, 0, 0, 0, 0, 0  };
 const int index_3 = 6 + 6 + 6 + 4 + 7 + 18 - 1;
-const int ctdwn_3 = 205; // 3*60 + 39;
+const long ctdwn_3 = 205*1000L; // 3*60 + 39;
 
 
 
@@ -92,7 +94,7 @@ const int h_or_b5[] =      {   3, 0, 0, 0, 0, 0,
                                2, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
                            };
 const int index_5 = 28 + 6 + 5 - 1;
-const int ctdwn_5 = 5 * 60 + 25;
+const long ctdwn_5 = (5 * 60 + 25)*1000L;  // (ms)
 
 
 //************************************* DOSC x1********************************
@@ -108,7 +110,7 @@ const int h_or_b5british[] =      {  3, 0, 0, 0, 0, 0,
                                      2, 0, 0, 0, 0, 0
                                   };
 const int index_5british = 4 * 6 - 1;
-const int ctdwn_5british = 5 * 60 + 8;
+const long ctdwn_5british = (5 * 60 + 8)*1000L;  // (ms)
 
 //************************************* DOSC ROLLING x3 ********************************
 const unsigned long sch__3[] =   {    0,       10,       20,       30,       40,      50,
@@ -137,54 +139,74 @@ const int h_or_b__3[] =          {   3, 0, 0, 0, 0, 0,
                                      2, 0, 0, 0, 0, 0
                                  };
 const int index__3 = 10 * 6 - 1;
-const int ctdwn__3 = 15 * 60 + 7;
+const long ctdwn__3 = (15 * 60 + 7)*1000L;  // (ms)
 
 
 
-// Global variables
+/***  Global Variables  ***/
 
-bool my_start = false;
-bool sound_on = false;
-int button_press_counter;    // button presses
-long start;  // sequence start time
+bool my_start;
+bool sound_on;
+int button_press_counter;  // button presses
+long timer_start_ms;  // sequence start time
 long sound_start_ms;  // sound start time
-long ctdwn;
+long countdown_ms;
 int index;
 
 const unsigned long* sch;
 const int* h_or_b;
 
+LiquidCrystal lcd(8, 9, 4, 5, 6, 7); // select the pins used on the LCD panel
 
 
+
+/***  Procedures  ***/
 
 void setup() {
+
+  my_start = false;
+  sound_on = false;
   button_press_counter = 0;
+  timer_start_ms = -1;
+  sound_start_ms = -1;
+  countdown_ms = -1;
+  index = 0;
+  sch = NULL;
+  h_or_b = NULL;
+
   Serial.begin(9600);
-  Serial.println("hello");
+  //Serial.println("hello");
   pinMode(RELAY_HORN, OUTPUT);
   pinMode(RELAY_BEEP, OUTPUT);
-  lcd.begin(16, 2);
+  lcd.begin(16, 2);  
   mymenu();
+  
 }
 
 
 int read_LCD_buttons() {
   int adc_key_in = analogRead(LCD_BUTTON_PIN);       // read the value from the sensor
 
-  // my buttons when read are centered at these values: 0, 144, 329, 504, 741
-  // we add approx 50 to those values and check to see if we are close
-  // We make this the 1st option for speed reasons since it will be the most likely result
+  // My V1.1 buttons when read are centered at these values: 0, 144, 329, 504, 741.
+  // We add approx 50 to those values and check to see if we are close.
+  // We make "nothing" the first option for speed reasons since it will be the most likely result.
 
-  if (adc_key_in > 1000) return BUTTON_NONE;
+  if (adc_key_in > 1000) {
+    return BUTTON_NONE;
+  } else if (adc_key_in < 50) {
+    return BUTTON_RIGHT;
+  } else if (adc_key_in < 250) {
+    return BUTTON_UP;
+  } else if (adc_key_in < 450) {
+    return BUTTON_DOWN;
+  } else if (adc_key_in < 650) {
+    return BUTTON_LEFT;
+  } else if (adc_key_in < 850) {
+    return BUTTON_SELECT;
+  }
 
-  // For V1.1 use this threshold
-  if (adc_key_in < 50)   return BUTTON_RIGHT;
-  if (adc_key_in < 250)  return BUTTON_UP;
-  if (adc_key_in < 450)  return BUTTON_DOWN;
-  if (adc_key_in < 650)  return BUTTON_LEFT;
-  if (adc_key_in < 850)  return BUTTON_SELECT;
-
-  return BUTTON_NONE;                // when all others fail, return this.
+  // when all others fail, return this.
+  return BUTTON_NONE;
 }
 
 
@@ -231,9 +253,9 @@ void activate_sound(int sound) {
   sound_start_ms = millis();
   lcd.setCursor(7, 1);
   if (sound == WARNING_BEEP)  {
-    lcd.print("B");
+    lcd.print(BEEP_ON_MSG);
   } else {
-    lcd.print("H");
+    lcd.print(HORN_ON_MSG);
   }
 }
 
@@ -245,7 +267,7 @@ void de_activate_sound(int sound) {
   }
   digitalWrite(what_beep, LOW);
   lcd.setCursor(7, 1);
-  lcd.print("        ");
+  lcd.print(SOUND_OFF_MSG);
 }
 
 
@@ -276,7 +298,7 @@ void diplay_timer(long time_ms) {
   if (time_ms > -1) {
 
     int seconds = (time_ms / 1000) % 60;
-    int minutes =  (time_ms / 1000) / 60;
+    int minutes = (time_ms / 1000) / 60;
     int sec_pos = 3;
 
     lcd.setCursor(1, 1);
@@ -286,7 +308,7 @@ void diplay_timer(long time_ms) {
     lcd.print(":");
     
     if (seconds < 10) {
-      sec_pos = sec_pos + 1;
+      sec_pos += 1;
       lcd.setCursor(3, 1);
       lcd.print("0");
     }
@@ -307,11 +329,11 @@ void loop() {
 
   const char* msg;
   int lcd_key = 0;
-  long time_ms =  millis() - start;
+  long time_since_start_ms =  millis() - timer_start_ms;
   if (my_start) {
-    long d = ctdwn*1000 - time_ms;
-    horn_or_beep(d);
-    diplay_timer(d);
+    long timer_now_ms = countdown_ms - time_since_start_ms;
+    horn_or_beep(timer_now_ms);
+    diplay_timer(timer_now_ms);
   }
 
   lcd_key = read_LCD_buttons();
@@ -324,28 +346,28 @@ void loop() {
         if (my_start) {
           if (button_press_counter == 0) {
             lcd_overwrite(STARTING_MSG, JASC_5_MSG);
-            ctdwn = ctdwn_5 ;
+            countdown_ms = ctdwn_5;
             sch = sch_5;
             h_or_b = h_or_b5;
             index = index_5;
           }
           if (button_press_counter == 1) {
             lcd_overwrite(STARTING_MSG, JASC_3_MSG);
-            ctdwn = ctdwn_3;
+            countdown_ms = ctdwn_3;
             sch = sch_3;
             h_or_b = h_or_b3;
             index = index_3;
           }
           if (button_press_counter == 2) {
             lcd_overwrite(STARTING_MSG, DOSC_1x5_MSG);
-            ctdwn = ctdwn_5british;
+            countdown_ms = ctdwn_5british;
             sch = sch_5british;
             h_or_b = h_or_b5british;
             index = index_5british;
           }
           if (button_press_counter == 3) {
             lcd_overwrite(STARTING_MSG, DOSC_3x5_MSG);
-            ctdwn = ctdwn__3;
+            countdown_ms = ctdwn__3;
             sch = sch__3;
             h_or_b = h_or_b__3;
             index = index__3;
@@ -353,7 +375,7 @@ void loop() {
           lcd.setCursor(0, 1);
           lcd.print(BEG_TIME_MSG);
           sound_on = false;
-          start = millis();
+          timer_start_ms = millis();
           break;
         } else {
           // stop
