@@ -145,14 +145,16 @@ const long ctdwn__3 = (15 * 60 + 7)*1000L;  // (ms)
 
 /***  Global Variables  ***/
 
-bool my_start;
-bool sound_on;
-int button_press_counter;  // button presses
-long timer_start_ms;  // sequence start time
-long sound_start_ms;  // sound start time
-long countdown_ms;
+/*  System State */
+bool is_timer_running;  // timer state
+bool is_sound_on;       // sound state
+int button_press_counter;  // sequence selection state
+long timer_start_ms;    // system time of sequence start
+long sound_start_ms;    // sound start time
+long timer_length_ms;   // length of countdown sequence
 int index;
 
+/* Countdown Procedure */
 const unsigned long* sch;
 const int* h_or_b;
 
@@ -164,12 +166,12 @@ LiquidCrystal lcd(8, 9, 4, 5, 6, 7); // select the pins used on the LCD panel
 
 void setup() {
 
-  my_start = false;
-  sound_on = false;
+  is_timer_running = false;
+  is_sound_on = false;
   button_press_counter = 0;
   timer_start_ms = -1;
   sound_start_ms = -1;
-  countdown_ms = -1;
+  timer_length_ms = -1;
   index = 0;
   sch = nullptr;
   h_or_b = nullptr;
@@ -182,7 +184,7 @@ void setup() {
   
   show_introduction();
   
-  // Ensure backlight is one
+  // Ensure backlight is on
   pinMode(LCD_BACKLIGHT_PIN, OUTPUT);
   digitalWrite(LCD_BACKLIGHT_PIN, HIGH); 
   
@@ -195,8 +197,8 @@ void loop() {
   const char* msg;
   int lcd_key = 0;
   long time_since_start_ms =  millis() - timer_start_ms;
-  if (my_start) {
-    long timer_now_ms = countdown_ms - time_since_start_ms;
+  if (is_timer_running) {
+    long timer_now_ms = timer_length_ms - time_since_start_ms;
     horn_or_beep(timer_now_ms);
     diplay_timer(timer_now_ms);
   }
@@ -207,39 +209,39 @@ void loop() {
   // depending on which button was pushed, we perform an action
   switch (lcd_key) {
     case BUTTON_LEFT: {
-        my_start = !my_start;
-        if (my_start) {
+        is_timer_running = !is_timer_running;
+        if (is_timer_running) {
           if (button_press_counter == 0) {
             lcd_overwrite(STARTING_MSG, JASC_5_MSG);
-            countdown_ms = ctdwn_5;
+            timer_length_ms = ctdwn_5;
             sch = sch_5;
             h_or_b = h_or_b5;
             index = index_5;
           }
           if (button_press_counter == 1) {
             lcd_overwrite(STARTING_MSG, JASC_3_MSG);
-            countdown_ms = ctdwn_3;
+            timer_length_ms = ctdwn_3;
             sch = sch_3;
             h_or_b = h_or_b3;
             index = index_3;
           }
           if (button_press_counter == 2) {
             lcd_overwrite(STARTING_MSG, DOSC_1x5_MSG);
-            countdown_ms = ctdwn_5british;
+            timer_length_ms = ctdwn_5british;
             sch = sch_5british;
             h_or_b = h_or_b5british;
             index = index_5british;
           }
           if (button_press_counter == 3) {
             lcd_overwrite(STARTING_MSG, DOSC_3x5_MSG);
-            countdown_ms = ctdwn__3;
+            timer_length_ms = ctdwn__3;
             sch = sch__3;
             h_or_b = h_or_b__3;
             index = index__3;
           }
           lcd.setCursor(0, 1);
           lcd.print(BEG_TIME_MSG);
-          sound_on = false;
+          is_sound_on = false;
           timer_start_ms = millis();
           break;
         } else {
@@ -248,14 +250,14 @@ void loop() {
           digitalWrite(RELAY_BEEP, LOW);
           lcd.setCursor(0, 0);
           lcd.print(CANCEL_MSG);
-          my_start = false;
+          is_timer_running = false;
         }
         delay(400);
         break;
       }
 
     case BUTTON_SELECT: {
-        if (!my_start) {
+        if (!is_timer_running) {
           button_press_counter += 1;
           if (button_press_counter > (NUM_SEQ - 1)) {
             button_press_counter = 0;
@@ -369,10 +371,10 @@ void de_activate_sound(int sound) {
 
 
 void horn_or_beep(unsigned long time_ms) {
-  if (sound_on) {
+  if (is_sound_on) {
     if ( ((millis() - sound_start_ms) > len_of_note[h_or_b[index]] ) ) {
       de_activate_sound(h_or_b[index]);
-      sound_on = false;
+      is_sound_on = false;
       index = index - 1;
     }
   } else {
@@ -384,7 +386,7 @@ void horn_or_beep(unsigned long time_ms) {
 
     if (time_ms < a_time_ms + 1000) {
       activate_sound(h_or_b[index]);
-      sound_on = true;
+      is_sound_on = true;
     }
   }
 }
