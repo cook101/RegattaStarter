@@ -34,6 +34,7 @@ const int WARNING_BEEP = 0;  // enumeration
 const int RELAY_BEEP = 2;   // beeper relay pin
 const int RELAY_HORN = 11;  // horn relay pin
 const int LCD_BUTTON_PIN = 0;
+const int LCD_BACKLIGHT_PIN = 10;
 
 // Time lengths
 const int STD_DELAY = 300; // (ms)
@@ -171,15 +172,20 @@ void setup() {
   sound_start_ms = -1;
   countdown_ms = -1;
   index = 0;
-  sch = NULL;
-  h_or_b = NULL;
+  sch = nullptr;
+  h_or_b = nullptr;
 
   Serial.begin(9600);
   //Serial.println("hello");
   pinMode(RELAY_HORN, OUTPUT);
   pinMode(RELAY_BEEP, OUTPUT);
-  lcd.begin(16, 2);  
-  mymenu();
+  lcd.begin(16, 2);
+  
+  show_introduction();
+  
+  // Ensure backlight is one
+  pinMode(LCD_BACKLIGHT_PIN, OUTPUT);
+  digitalWrite(LCD_BACKLIGHT_PIN, HIGH); 
   
 }
 
@@ -218,16 +224,16 @@ void lcd_overwrite(const char upper[16], const char lower[16]) {
   lcd.print(EMPTY_MSG);
   lcd.setCursor(0, 0);
   lcd.print(upper);
-  delay(STD_DELAY);
   lcd.setCursor(0, 1);
   lcd.print(lower);
-  delay(STD_DELAY);
 }
 
 
-void mymenu() {
-  lcd_overwrite("BY CHRIS LABORDE", " & J BERENGUERES");
+void show_introduction() {
+  lcd_overwrite("BY CHRIS LABORDE", "");
   delay(STD_DELAY);
+  lcd_overwrite("BY CHRIS LABORDE", " & J BERENGUERES");
+  delay(3*STD_DELAY);
   lcd_overwrite("SELECT 5 OR 3 ", "MINUTE SEQUENCE ");
 }
 /*
