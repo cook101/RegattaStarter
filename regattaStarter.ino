@@ -46,7 +46,6 @@ const char* const JASC_5_MSG   = "JASC 1x5 min    ";
 const char* const JASC_3_MSG   = "JASC 1x3 min    ";
 const char* const DOSC_1x5_MSG = "DOSC 1x5 min    ";
 const char* const DOSC_3x5_MSG = "DOSC 3x5 min    ";
-const char* const DOSC_3x5_ALT_MSG = "DOSC ROLLING 3x5";
 const char* const EMPTY_MSG    = "                ";
 const char* const BEG_TIME_MSG = "00:00           ";
 const char* const CANCEL_MSG   = "SEQ. CANCELLED  ";
@@ -407,7 +406,7 @@ void loop() {
             msg = DOSC_1x5_MSG;
           }
           if (button_press_counter == 3) {
-            msg = DOSC_3x5_ALT_MSG;
+            msg = DOSC_3x5_MSG;
           }
           lcd_overwrite(msg, EMPTY_MSG);
           break;
