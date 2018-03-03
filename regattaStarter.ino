@@ -163,10 +163,11 @@ LiquidCrystal lcd(8, 9, 4, 5, 6, 7); // select the pins used on the LCD panel
 
 
 
-/***  Procedures  ***/
+/***  Functions  ***/
 
 void setup() {
 
+  // Initialize state
   is_timer_running = false;
   is_horn_on = false;
   is_beep_on = false;
@@ -178,18 +179,20 @@ void setup() {
   sch = nullptr;
   h_or_b = nullptr;
 
-  Serial.begin(9600);
+  //Serial.begin(9600);
   //Serial.println("hello");
+
+  // Initialize sound relays
   pinMode(RELAY_HORN, OUTPUT);
   pinMode(RELAY_BEEP, OUTPUT);
+
+  // Initialize display, ensuring backlight is on
   lcd.begin(16, 2);
-  
-  show_introduction();
-  
-  // Ensure backlight is on
   pinMode(LCD_BACKLIGHT_PIN, OUTPUT);
-  digitalWrite(LCD_BACKLIGHT_PIN, HIGH); 
-  
+  digitalWrite(LCD_BACKLIGHT_PIN, HIGH);
+
+  show_introduction();
+
 }
 
 
@@ -331,6 +334,7 @@ void show_introduction() {
 }
 
 
+
 void activate_sound(int sound) {
   // check what instrument to sound
   int what_beep = RELAY_HORN;
@@ -347,6 +351,7 @@ void activate_sound(int sound) {
 }
 
 
+
 void de_activate_sound(int sound) {
   int what_beep = RELAY_HORN;
   if (sound == WARNING_BEEP) {
@@ -357,6 +362,7 @@ void de_activate_sound(int sound) {
   }
   digitalWrite(what_beep, LOW);
 }
+
 
 
 void horn_or_beep(unsigned long time_ms) {
