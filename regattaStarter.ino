@@ -147,7 +147,8 @@ const long ctdwn__3 = (15 * 60 + 7)*1000L;  // (ms)
 
 /*  System State */
 bool is_timer_running;  // timer state
-bool is_sound_on;       // sound state
+bool is_horn_on;        // horn state
+bool is_beep_on;        // race committee warning beep
 int button_press_counter;  // sequence selection state
 long timer_start_ms;    // system time of sequence start
 long sound_start_ms;    // sound start time
@@ -167,7 +168,8 @@ LiquidCrystal lcd(8, 9, 4, 5, 6, 7); // select the pins used on the LCD panel
 void setup() {
 
   is_timer_running = false;
-  is_sound_on = false;
+  is_horn_on = false;
+  is_beep_on = false;
   button_press_counter = 0;
   timer_start_ms = -1;
   sound_start_ms = -1;
@@ -239,17 +241,15 @@ void loop() {
             h_or_b = h_or_b__3;
             index = index__3;
           }
-          lcd.setCursor(0, 1);
-          lcd.print(BEG_TIME_MSG);
-          is_sound_on = false;
+          is_horn_on = false;
+          is_beep_on = false;
           timer_start_ms = millis();
           break;
         } else {
           // stop
-          digitalWrite(RELAY_HORN, LOW);
-          digitalWrite(RELAY_BEEP, LOW);
-          lcd.setCursor(0, 0);
-          lcd.print(CANCEL_MSG);
+          de_activate_sound(RELAY_HORN);
+          de_activate_sound(RELAY_BEEP);
+          lcd_overwrite(CANCEL_MSG, "");
           is_timer_running = false;
         }
         delay(400);
@@ -320,6 +320,66 @@ int read_LCD_buttons() {
 }
 
 
+
+void show_introduction() {
+  lcd_overwrite("BY CHRIS LABORDE", "");
+  delay(STD_DELAY);
+  lcd_overwrite("BY CHRIS LABORDE", " & J BERENGUERES");
+  delay(3*STD_DELAY);
+  lcd_overwrite("SELECT 5 OR 3 ", "MINUTE SEQUENCE ");
+  delay(STD_DELAY);
+}
+
+
+void activate_sound(int sound) {
+  // check what instrument to sound
+  int what_beep = RELAY_HORN;
+  if (sound == WARNING_BEEP) {
+    what_beep = RELAY_BEEP;
+  }
+  digitalWrite(what_beep, HIGH);
+  sound_start_ms = millis();
+  if (sound == WARNING_BEEP)  {
+    is_beep_on = true;
+  } else {
+    is_horn_on = true;
+  }
+}
+
+
+void de_activate_sound(int sound) {
+  int what_beep = RELAY_HORN;
+  if (sound == WARNING_BEEP) {
+    what_beep = RELAY_BEEP;
+    is_beep_on = false;
+  } else {
+    is_horn_on = false;
+  }
+  digitalWrite(what_beep, LOW);
+}
+
+
+void horn_or_beep(unsigned long time_ms) {
+  if (is_horn_on || is_beep_on) {
+    if ( ((millis() - sound_start_ms) > len_of_note[h_or_b[index]] ) ) {
+      de_activate_sound(h_or_b[index]);
+      index = index - 1;
+    }
+  } else {
+    unsigned long a_time_ms = (sch[index] * 100);
+    //Serial.println("long v = (long) (sch[index]*1000);");
+    //Serial.println(index);
+    //Serial.println(s);
+    //Serial.println(v);
+
+    if (time_ms < a_time_ms + 1000) {
+      activate_sound(h_or_b[index]);
+    }
+  }
+}
+
+
+
 // utility to print on LCD
 void lcd_overwrite(const char upper[16], const char lower[16]) {
   lcd.setCursor(0, 0);
@@ -333,64 +393,6 @@ void lcd_overwrite(const char upper[16], const char lower[16]) {
 }
 
 
-void show_introduction() {
-  lcd_overwrite("BY CHRIS LABORDE", "");
-  delay(STD_DELAY);
-  lcd_overwrite("BY CHRIS LABORDE", " & J BERENGUERES");
-  delay(3*STD_DELAY);
-  lcd_overwrite("SELECT 5 OR 3 ", "MINUTE SEQUENCE ");
-}
-
-
-void activate_sound(int sound) {
-  // check what instrument to sound
-  int what_beep = RELAY_HORN;
-  if (sound == WARNING_BEEP) {
-    what_beep = RELAY_BEEP;
-  }
-  digitalWrite(what_beep, HIGH);
-  sound_start_ms = millis();
-  lcd.setCursor(7, 1);
-  if (sound == WARNING_BEEP)  {
-    lcd.print(BEEP_ON_MSG);
-  } else {
-    lcd.print(HORN_ON_MSG);
-  }
-}
-
-
-void de_activate_sound(int sound) {
-  int what_beep = RELAY_HORN;
-  if (sound == WARNING_BEEP) {
-    what_beep = RELAY_BEEP;
-  }
-  digitalWrite(what_beep, LOW);
-  lcd.setCursor(7, 1);
-  lcd.print(SOUND_OFF_MSG);
-}
-
-
-void horn_or_beep(unsigned long time_ms) {
-  if (is_sound_on) {
-    if ( ((millis() - sound_start_ms) > len_of_note[h_or_b[index]] ) ) {
-      de_activate_sound(h_or_b[index]);
-      is_sound_on = false;
-      index = index - 1;
-    }
-  } else {
-    unsigned long a_time_ms = (sch[index] * 100);
-    //Serial.println("long v = (long) (sch[index]*1000);");
-    //Serial.println(index);
-    //Serial.println(s);
-    //Serial.println(v);
-
-    if (time_ms < a_time_ms + 1000) {
-      activate_sound(h_or_b[index]);
-      is_sound_on = true;
-    }
-  }
-}
-
 
 void diplay_timer(long time_ms) {
 
@@ -400,12 +402,15 @@ void diplay_timer(long time_ms) {
     int minutes = (time_ms / 1000) / 60;
     int sec_pos = 3;
 
+    lcd.setCursor(0, 1);
+    lcd.print(" ");
+
     lcd.setCursor(1, 1);
     lcd.print(minutes);
 
     lcd.setCursor(2, 1);
     lcd.print(":");
-    
+
     if (seconds < 10) {
       sec_pos += 1;
       lcd.setCursor(3, 1);
@@ -413,6 +418,24 @@ void diplay_timer(long time_ms) {
     }
     lcd.setCursor(sec_pos, 1);
     lcd.print(seconds);
+
+    // Separator
+    lcd.setCursor(5, 1);
+    lcd.print("  ");
+
+    // Display sound state
+    lcd.setCursor(7, 1);
+    if (is_horn_on) {
+      lcd.print(HORN_ON_MSG);
+    } else if (is_beep_on) {
+      lcd.print(BEEP_ON_MSG);
+    } else {
+      lcd.print(SOUND_OFF_MSG);
+    }
+
+    // Blank out rest of display
+    lcd.setCursor(8, 1);
+    lcd.print("        ");
 
   } else {
 
