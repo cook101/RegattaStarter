@@ -199,7 +199,7 @@ void setup() {
 
 void loop() {
 
-  const char* msg;
+  const char* msg = EMPTY_MSG;
   int lcd_key = 0;
   long time_since_start_ms =  millis() - timer_start_ms;
   if (is_timer_running) {
@@ -222,22 +222,19 @@ void loop() {
             sch = sch_5;
             h_or_b = h_or_b5;
             index = index_5;
-          }
-          if (button_press_counter == 1) {
+          } else if (button_press_counter == 1) {
             lcd_overwrite(STARTING_MSG, JASC_3_MSG);
             timer_length_ms = ctdwn_3;
             sch = sch_3;
             h_or_b = h_or_b3;
             index = index_3;
-          }
-          if (button_press_counter == 2) {
+          } else if (button_press_counter == 2) {
             lcd_overwrite(STARTING_MSG, DOSC_1x5_MSG);
             timer_length_ms = ctdwn_5british;
             sch = sch_5british;
             h_or_b = h_or_b5british;
             index = index_5british;
-          }
-          if (button_press_counter == 3) {
+          } else if (button_press_counter == 3) {
             lcd_overwrite(STARTING_MSG, DOSC_3x5_MSG);
             timer_length_ms = ctdwn__3;
             sch = sch__3;
@@ -267,14 +264,11 @@ void loop() {
           }
           if (button_press_counter == 0) {
             msg = JASC_5_MSG;
-          }
-          if (button_press_counter == 1) {
+          } else if (button_press_counter == 1) {
             msg = JASC_3_MSG;
-          }
-          if (button_press_counter == 2) {
+          } else if (button_press_counter == 2) {
             msg = DOSC_1x5_MSG;
-          }
-          if (button_press_counter == 3) {
+          } else if (button_press_counter == 3) {
             msg = DOSC_3x5_MSG;
           }
           lcd_overwrite(msg, EMPTY_MSG);
