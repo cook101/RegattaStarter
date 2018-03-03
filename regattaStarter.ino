@@ -279,13 +279,13 @@ void horn_or_beep(unsigned long time_ms) {
       index = index - 1;
     }
   } else {
-    unsigned long v = (sch[index] * 100);
+    unsigned long a_time_ms = (sch[index] * 100);
     //Serial.println("long v = (long) (sch[index]*1000);");
     //Serial.println(index);
     //Serial.println(s);
     //Serial.println(v);
 
-    if (time_ms < v + 1000) {
+    if (time_ms < a_time_ms + 1000) {
       activate_sound(h_or_b[index]);
       sound_on = true;
     }
