@@ -189,6 +189,102 @@ void setup() {
 }
 
 
+
+void loop() {
+
+  const char* msg;
+  int lcd_key = 0;
+  long time_since_start_ms =  millis() - timer_start_ms;
+  if (my_start) {
+    long timer_now_ms = countdown_ms - time_since_start_ms;
+    horn_or_beep(timer_now_ms);
+    diplay_timer(timer_now_ms);
+  }
+
+  lcd_key = read_LCD_buttons();
+  delay(50);
+
+  // depending on which button was pushed, we perform an action
+  switch (lcd_key) {
+    case BUTTON_LEFT: {
+        my_start = !my_start;
+        if (my_start) {
+          if (button_press_counter == 0) {
+            lcd_overwrite(STARTING_MSG, JASC_5_MSG);
+            countdown_ms = ctdwn_5;
+            sch = sch_5;
+            h_or_b = h_or_b5;
+            index = index_5;
+          }
+          if (button_press_counter == 1) {
+            lcd_overwrite(STARTING_MSG, JASC_3_MSG);
+            countdown_ms = ctdwn_3;
+            sch = sch_3;
+            h_or_b = h_or_b3;
+            index = index_3;
+          }
+          if (button_press_counter == 2) {
+            lcd_overwrite(STARTING_MSG, DOSC_1x5_MSG);
+            countdown_ms = ctdwn_5british;
+            sch = sch_5british;
+            h_or_b = h_or_b5british;
+            index = index_5british;
+          }
+          if (button_press_counter == 3) {
+            lcd_overwrite(STARTING_MSG, DOSC_3x5_MSG);
+            countdown_ms = ctdwn__3;
+            sch = sch__3;
+            h_or_b = h_or_b__3;
+            index = index__3;
+          }
+          lcd.setCursor(0, 1);
+          lcd.print(BEG_TIME_MSG);
+          sound_on = false;
+          timer_start_ms = millis();
+          break;
+        } else {
+          // stop
+          digitalWrite(RELAY_HORN, LOW);
+          digitalWrite(RELAY_BEEP, LOW);
+          lcd.setCursor(0, 0);
+          lcd.print(CANCEL_MSG);
+          my_start = false;
+        }
+        delay(400);
+        break;
+      }
+
+    case BUTTON_SELECT: {
+        if (!my_start) {
+          button_press_counter += 1;
+          if (button_press_counter > (NUM_SEQ - 1)) {
+            button_press_counter = 0;
+          }
+          if (button_press_counter == 0) {
+            msg = JASC_5_MSG;
+          }
+          if (button_press_counter == 1) {
+            msg = JASC_3_MSG;
+          }
+          if (button_press_counter == 2) {
+            msg = DOSC_1x5_MSG;
+          }
+          if (button_press_counter == 3) {
+            msg = DOSC_3x5_MSG;
+          }
+          lcd_overwrite(msg, EMPTY_MSG);
+          break;
+        }
+      }
+
+    case BUTTON_NONE: {
+        break;
+      }
+  }
+}
+
+
+
 int read_LCD_buttons() {
   int adc_key_in = analogRead(LCD_BUTTON_PIN);       // read the value from the sensor
   int button = BUTTON_NONE;
@@ -322,100 +418,6 @@ void diplay_timer(long time_ms) {
     lcd.print("START!");
     digitalWrite(RELAY_HORN, LOW);
 
-  }
-}
-
-
-void loop() {
-
-  const char* msg;
-  int lcd_key = 0;
-  long time_since_start_ms =  millis() - timer_start_ms;
-  if (my_start) {
-    long timer_now_ms = countdown_ms - time_since_start_ms;
-    horn_or_beep(timer_now_ms);
-    diplay_timer(timer_now_ms);
-  }
-
-  lcd_key = read_LCD_buttons();
-  delay(50);
-
-  // depending on which button was pushed, we perform an action
-  switch (lcd_key) {
-    case BUTTON_LEFT: {
-        my_start = !my_start;
-        if (my_start) {
-          if (button_press_counter == 0) {
-            lcd_overwrite(STARTING_MSG, JASC_5_MSG);
-            countdown_ms = ctdwn_5;
-            sch = sch_5;
-            h_or_b = h_or_b5;
-            index = index_5;
-          }
-          if (button_press_counter == 1) {
-            lcd_overwrite(STARTING_MSG, JASC_3_MSG);
-            countdown_ms = ctdwn_3;
-            sch = sch_3;
-            h_or_b = h_or_b3;
-            index = index_3;
-          }
-          if (button_press_counter == 2) {
-            lcd_overwrite(STARTING_MSG, DOSC_1x5_MSG);
-            countdown_ms = ctdwn_5british;
-            sch = sch_5british;
-            h_or_b = h_or_b5british;
-            index = index_5british;
-          }
-          if (button_press_counter == 3) {
-            lcd_overwrite(STARTING_MSG, DOSC_3x5_MSG);
-            countdown_ms = ctdwn__3;
-            sch = sch__3;
-            h_or_b = h_or_b__3;
-            index = index__3;
-          }
-          lcd.setCursor(0, 1);
-          lcd.print(BEG_TIME_MSG);
-          sound_on = false;
-          timer_start_ms = millis();
-          break;
-        } else {
-          // stop
-          digitalWrite(RELAY_HORN, LOW);
-          digitalWrite(RELAY_BEEP, LOW);
-          lcd.setCursor(0, 0);
-          lcd.print(CANCEL_MSG);
-          my_start = false;
-        }
-        delay(400);
-        break;
-      }
-
-    case BUTTON_SELECT: {
-        if (!my_start) {
-          button_press_counter += 1;
-          if (button_press_counter > (NUM_SEQ - 1)) {
-            button_press_counter = 0;
-          }
-          if (button_press_counter == 0) {
-            msg = JASC_5_MSG;
-          }
-          if (button_press_counter == 1) {
-            msg = JASC_3_MSG;
-          }
-          if (button_press_counter == 2) {
-            msg = DOSC_1x5_MSG;
-          }
-          if (button_press_counter == 3) {
-            msg = DOSC_3x5_MSG;
-          }
-          lcd_overwrite(msg, EMPTY_MSG);
-          break;
-        }
-      }
-
-    case BUTTON_NONE: {
-        break;
-      }
   }
 }
 
