@@ -192,27 +192,34 @@ void setup() {
 
 int read_LCD_buttons() {
   int adc_key_in = analogRead(LCD_BUTTON_PIN);       // read the value from the sensor
-
+  int button = BUTTON_NONE;
   // My V1.1 buttons when read are centered at these values: 0, 144, 329, 504, 741.
   // We add approx 50 to those values and check to see if we are close.
   // We make "nothing" the first option for speed reasons since it will be the most likely result.
 
-  if (adc_key_in > 1000) {
-    return BUTTON_NONE;
-  } else if (adc_key_in < 50) {
-    return BUTTON_RIGHT;
-  } else if (adc_key_in < 250) {
-    return BUTTON_UP;
-  } else if (adc_key_in < 450) {
-    return BUTTON_DOWN;
-  } else if (adc_key_in < 650) {
-    return BUTTON_LEFT;
-  } else if (adc_key_in < 850) {
-    return BUTTON_SELECT;
+  if (adc_key_in <= 1000) {
+
+    // Button pressed
+    if (adc_key_in < 50) {
+      button = BUTTON_RIGHT;
+    } else if (adc_key_in < 250) {
+      button = BUTTON_UP;
+    } else if (adc_key_in < 450) {
+      button = BUTTON_DOWN;
+    } else if (adc_key_in < 650) {
+      button = BUTTON_LEFT;
+    } else if (adc_key_in < 850) {
+      button = BUTTON_SELECT;
+    } else {
+      button = BUTTON_NONE;
+    }
+
+    // Add delay to debounce
+    delay(100);
   }
 
-  // when all others fail, return this.
-  return BUTTON_NONE;
+  return button;
+
 }
 
 
@@ -236,17 +243,6 @@ void show_introduction() {
   delay(3*STD_DELAY);
   lcd_overwrite("SELECT 5 OR 3 ", "MINUTE SEQUENCE ");
 }
-/*
-  void vibrate(int n,int b, int c) {
-  for(int i=0;i<n;i++){
-    digitalWrite(RELAY_PIN, HIGH);
-    delay(b);
-    digitalWrite(RELAY_PIN, LOW);
-    delay(c);
-
-  }
-  }
-*/
 
 
 void activate_sound(int sound) {
