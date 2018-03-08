@@ -17,7 +17,7 @@
 
 /***  Constants  ***/
 
-const int NUM_SEQ = 4;  // Number of menu options
+const int NUMBER_OF_SEQUENCES = 4;
 
 // Button enumerations
 const int BUTTON_RIGHT  = 0;
@@ -26,6 +26,7 @@ const int BUTTON_DOWN   = 2;
 const int BUTTON_LEFT   = 3;
 const int BUTTON_SELECT = 4;
 const int BUTTON_NONE   = 5;
+const int BUTTON_START_STOP = BUTTON_LEFT;
 
 const int WARNING_BEEP = 0;  // enumeration
 
@@ -179,9 +180,6 @@ void setup() {
   sch = nullptr;
   h_or_b = nullptr;
 
-  //Serial.begin(9600);
-  //Serial.println("hello");
-
   // Initialize sound relays
   pinMode(RELAY_HORN, OUTPUT);
   pinMode(RELAY_BEEP, OUTPUT);
@@ -193,6 +191,8 @@ void setup() {
 
   show_introduction();
 
+  return;
+
 }
 
 
@@ -200,7 +200,6 @@ void setup() {
 void loop() {
 
   const char* msg = EMPTY_MSG;
-  int lcd_key = 0;
   long time_since_start_ms =  millis() - timer_start_ms;
   if (is_timer_running) {
     long timer_now_ms = timer_length_ms - time_since_start_ms;
@@ -208,14 +207,17 @@ void loop() {
     diplay_timer(timer_now_ms);
   }
 
-  lcd_key = read_LCD_buttons();
-  delay(50);
-
   // depending on which button was pushed, we perform an action
-  switch (lcd_key) {
-    case BUTTON_LEFT: {
-        is_timer_running = !is_timer_running;
+  switch (read_LCD_buttons()) {
+    case BUTTON_START_STOP: {
         if (is_timer_running) {
+          // Stop timer
+          de_activate_sound(RELAY_HORN);
+          de_activate_sound(RELAY_BEEP);
+          lcd_overwrite(CANCEL_MSG, "");
+          is_timer_running = false;
+        } else {
+          // Start timer
           if (button_press_counter == 0) {
             lcd_overwrite(STARTING_MSG, JASC_5_MSG);
             timer_length_ms = ctdwn_5;
@@ -244,22 +246,16 @@ void loop() {
           is_horn_on = false;
           is_beep_on = false;
           timer_start_ms = millis();
-          break;
-        } else {
-          // stop
-          de_activate_sound(RELAY_HORN);
-          de_activate_sound(RELAY_BEEP);
-          lcd_overwrite(CANCEL_MSG, "");
-          is_timer_running = false;
+          is_timer_running = true;
         }
-        delay(400);
+        delay(400);  // TODO: Remove after implementing more sophisticated debouncing
         break;
       }
 
     case BUTTON_SELECT: {
         if (!is_timer_running) {
           button_press_counter += 1;
-          if (button_press_counter > (NUM_SEQ - 1)) {
+          if (button_press_counter >= NUMBER_OF_SEQUENCES) {
             button_press_counter = 0;
           }
           if (button_press_counter == 0) {
@@ -285,7 +281,7 @@ void loop() {
 
 
 int read_LCD_buttons() {
-  int adc_key_in = analogRead(LCD_BUTTON_PIN);       // read the value from the sensor
+  int adc_key_in = analogRead(LCD_BUTTON_PIN);  // read the value from the sensor
   int button = BUTTON_NONE;
   // My V1.1 buttons when read are centered at these values: 0, 144, 329, 504, 741.
   // We add approx 50 to those values and check to see if we are close.
@@ -309,7 +305,8 @@ int read_LCD_buttons() {
     }
 
     // Add delay to debounce
-    delay(100);
+    // TODO: Debounce better
+    delay(200);
   }
 
   return button;
@@ -323,8 +320,9 @@ void show_introduction() {
   delay(STD_DELAY);
   lcd_overwrite("BY CHRIS LABORDE", " & J BERENGUERES");
   delay(3*STD_DELAY);
-  lcd_overwrite("SELECT 5 OR 3 ", "MINUTE SEQUENCE ");
+  lcd_overwrite("Select start", "  sequence");
   delay(STD_DELAY);
+  return;
 }
 
 
@@ -342,6 +340,7 @@ void activate_sound(int sound) {
   } else {
     is_horn_on = true;
   }
+  return;
 }
 
 
@@ -355,6 +354,7 @@ void de_activate_sound(int sound) {
     is_horn_on = false;
   }
   digitalWrite(what_beep, LOW);
+  return;
 }
 
 
@@ -376,11 +376,11 @@ void horn_or_beep(unsigned long time_ms) {
       activate_sound(h_or_b[index]);
     }
   }
+  return;
 }
 
 
 
-// utility to print on LCD
 void lcd_overwrite(const char upper[16], const char lower[16]) {
   lcd.setCursor(0, 0);
   lcd.print(EMPTY_MSG);
@@ -390,6 +390,7 @@ void lcd_overwrite(const char upper[16], const char lower[16]) {
   lcd.print(upper);
   lcd.setCursor(0, 1);
   lcd.print(lower);
+  return;
 }
 
 
@@ -444,5 +445,6 @@ void diplay_timer(long time_ms) {
     digitalWrite(RELAY_HORN, LOW);
 
   }
+  return;
 }
 
