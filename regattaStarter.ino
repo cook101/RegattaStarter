@@ -268,8 +268,8 @@ void loop() {
             msg = DOSC_3x5_MSG;
           }
           lcd_overwrite(msg, EMPTY_MSG);
-          break;
         }
+        break;
       }
 
     case BUTTON_NONE: {
@@ -320,7 +320,7 @@ void show_introduction() {
   delay(STD_DELAY);
   lcd_overwrite("BY CHRIS LABORDE", " & J BERENGUERES");
   delay(3*STD_DELAY);
-  lcd_overwrite("Select start", "  sequence");
+  lcd_overwrite("  Select start", "    sequence");
   delay(STD_DELAY);
   return;
 }
