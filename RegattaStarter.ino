@@ -147,14 +147,16 @@ const long ctdwn__3 = (15 * 60 + 7)*1000L;  // (ms)
 /***  Global Variables  ***/
 
 /*  System State */
-bool is_timer_running;  // timer state
-bool is_horn_on;        // horn state
-bool is_beep_on;        // race committee warning beep
-int button_press_counter;  // sequence selection state
-long timer_start_ms;    // system time of sequence start
-long sound_start_ms;    // sound start time
-long timer_length_ms;   // length of countdown sequence
-int index;
+struct SystemState_t {
+  bool is_timer_running;
+  bool is_horn_on;  // horn to signal to racers
+  bool is_beep_on;  // race committee warning beep
+  short selected_sequence;  // countdown sequence selection
+  long timer_start_ms;  // system time at sequence start
+  long sound_start_ms;  // system time at sound start
+  long timer_length_ms; // length of countdown sequence
+  int index;  // position in countdown sequence instructions
+} state;
 
 /* Countdown Procedure */
 const unsigned long* sch;
@@ -168,15 +170,15 @@ LiquidCrystal lcd(8, 9, 4, 5, 6, 7); // select the pins used on the LCD panel
 
 void setup() {
 
-  // Initialize state
-  is_timer_running = false;
-  is_horn_on = false;
-  is_beep_on = false;
-  button_press_counter = 0;
-  timer_start_ms = -1;
-  sound_start_ms = -1;
-  timer_length_ms = -1;
-  index = 0;
+  // Initialize system
+  state.is_timer_running = false;
+  state.is_horn_on = false;
+  state.is_beep_on = false;
+  state.selected_sequence = 0;
+  state.timer_start_ms = -1;
+  state.sound_start_ms = -1;
+  state.timer_length_ms = -1;
+  state.index = -1;
   sch = nullptr;
   h_or_b = nullptr;
 
@@ -199,75 +201,61 @@ void setup() {
 
 void loop() {
 
-  const char* msg = EMPTY_MSG;
-  long time_since_start_ms =  millis() - timer_start_ms;
-  if (is_timer_running) {
-    long timer_now_ms = timer_length_ms - time_since_start_ms;
-    horn_or_beep(timer_now_ms);
-    diplay_timer(timer_now_ms);
+  long time_since_start_ms =  millis() - state.timer_start_ms;
+  if (state.is_timer_running) {
+    long time_remaining_ms = state.timer_length_ms - time_since_start_ms;
+    horn_or_beep(time_remaining_ms);
+    diplay_timer(time_remaining_ms);
   }
 
   // depending on which button was pushed, we perform an action
   switch (read_LCD_buttons()) {
     case BUTTON_START_STOP: {
-        if (is_timer_running) {
+        if (state.is_timer_running) {
           // Stop timer
           de_activate_sound(RELAY_HORN);
           de_activate_sound(RELAY_BEEP);
           lcd_overwrite(CANCEL_MSG, "");
-          is_timer_running = false;
+          state.is_timer_running = false;
         } else {
           // Start timer
-          if (button_press_counter == 0) {
+          if (state.selected_sequence == 0) {
             lcd_overwrite(STARTING_MSG, JASC_5_MSG);
-            timer_length_ms = ctdwn_5;
+            state.timer_length_ms = ctdwn_5;
             sch = sch_5;
             h_or_b = h_or_b5;
-            index = index_5;
-          } else if (button_press_counter == 1) {
+            state.index = index_5;
+          } else if (state.selected_sequence == 1) {
             lcd_overwrite(STARTING_MSG, JASC_3_MSG);
-            timer_length_ms = ctdwn_3;
+            state.timer_length_ms = ctdwn_3;
             sch = sch_3;
             h_or_b = h_or_b3;
-            index = index_3;
-          } else if (button_press_counter == 2) {
+            state.index = index_3;
+          } else if (state.selected_sequence == 2) {
             lcd_overwrite(STARTING_MSG, DOSC_1x5_MSG);
-            timer_length_ms = ctdwn_5british;
+            state.timer_length_ms = ctdwn_5british;
             sch = sch_5british;
             h_or_b = h_or_b5british;
-            index = index_5british;
-          } else if (button_press_counter == 3) {
+            state.index = index_5british;
+          } else if (state.selected_sequence == 3) {
             lcd_overwrite(STARTING_MSG, DOSC_3x5_MSG);
-            timer_length_ms = ctdwn__3;
+            state.timer_length_ms = ctdwn__3;
             sch = sch__3;
             h_or_b = h_or_b__3;
-            index = index__3;
+            state.index = index__3;
           }
-          is_horn_on = false;
-          is_beep_on = false;
-          timer_start_ms = millis();
-          is_timer_running = true;
+          state.is_horn_on = false;
+          state.is_beep_on = false;
+          state.timer_start_ms = millis();
+          state.is_timer_running = true;
         }
         delay(400);  // TODO: Remove after implementing more sophisticated debouncing
         break;
       }
 
     case BUTTON_SELECT: {
-        if (!is_timer_running) {
-          button_press_counter += 1;
-          if (button_press_counter >= NUMBER_OF_SEQUENCES) {
-            button_press_counter = 0;
-          }
-          if (button_press_counter == 0) {
-            msg = JASC_5_MSG;
-          } else if (button_press_counter == 1) {
-            msg = JASC_3_MSG;
-          } else if (button_press_counter == 2) {
-            msg = DOSC_1x5_MSG;
-          } else if (button_press_counter == 3) {
-            msg = DOSC_3x5_MSG;
-          }
-          lcd_overwrite(msg, EMPTY_MSG);
+        if (!state.is_timer_running) {
+          increment_sequence_selection();
         }
         break;
       }
@@ -278,6 +266,31 @@ void loop() {
   }
 }
 
+
+
+void increment_sequence_selection() {
+
+  const char* msg = EMPTY_MSG;
+
+  state.selected_sequence += 1;
+  if (state.selected_sequence >= NUMBER_OF_SEQUENCES) {
+    state.selected_sequence = 0;
+  }
+
+  if (state.selected_sequence == 0) {
+    msg = JASC_5_MSG;
+  } else if (state.selected_sequence == 1) {
+    msg = JASC_3_MSG;
+  } else if (state.selected_sequence == 2) {
+    msg = DOSC_1x5_MSG;
+  } else if (state.selected_sequence == 3) {
+    msg = DOSC_3x5_MSG;
+  }
+
+  lcd_overwrite(msg, EMPTY_MSG);
+
+  return;
+}
 
 
 int read_LCD_buttons() {
@@ -334,11 +347,11 @@ void activate_sound(int sound) {
     what_beep = RELAY_BEEP;
   }
   digitalWrite(what_beep, HIGH);
-  sound_start_ms = millis();
+  state.sound_start_ms = millis();
   if (sound == WARNING_BEEP)  {
-    is_beep_on = true;
+    state.is_beep_on = true;
   } else {
-    is_horn_on = true;
+    state.is_horn_on = true;
   }
   return;
 }
@@ -349,9 +362,9 @@ void de_activate_sound(int sound) {
   int what_beep = RELAY_HORN;
   if (sound == WARNING_BEEP) {
     what_beep = RELAY_BEEP;
-    is_beep_on = false;
+    state.is_beep_on = false;
   } else {
-    is_horn_on = false;
+    state.is_horn_on = false;
   }
   digitalWrite(what_beep, LOW);
   return;
@@ -360,20 +373,20 @@ void de_activate_sound(int sound) {
 
 
 void horn_or_beep(unsigned long time_ms) {
-  if (is_horn_on || is_beep_on) {
-    if ( ((millis() - sound_start_ms) > len_of_note[h_or_b[index]] ) ) {
-      de_activate_sound(h_or_b[index]);
-      index = index - 1;
+  if (state.is_horn_on || state.is_beep_on) {
+    if ( ((millis() - state.sound_start_ms) > len_of_note[h_or_b[state.index]] ) ) {
+      de_activate_sound(h_or_b[state.index]);
+      state.index -= 1;
     }
   } else {
-    unsigned long a_time_ms = (sch[index] * 100);
-    //Serial.println("long v = (long) (sch[index]*1000);");
-    //Serial.println(index);
+    unsigned long a_time_ms = (sch[state.index] * 100);
+    //Serial.println("long v = (long) (sch[state.index]*1000);");
+    //Serial.println(state.index);
     //Serial.println(s);
     //Serial.println(v);
 
     if (time_ms < a_time_ms + 1000) {
-      activate_sound(h_or_b[index]);
+      activate_sound(h_or_b[state.index]);
     }
   }
   return;
@@ -426,9 +439,9 @@ void diplay_timer(long time_ms) {
 
     // Display sound state
     lcd.setCursor(7, 1);
-    if (is_horn_on) {
+    if (state.is_horn_on) {
       lcd.print(HORN_ON_MSG);
-    } else if (is_beep_on) {
+    } else if (state.is_beep_on) {
       lcd.print(BEEP_ON_MSG);
     } else {
       lcd.print(SOUND_OFF_MSG);
