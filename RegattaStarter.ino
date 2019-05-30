@@ -20,16 +20,17 @@
 const int NUMBER_OF_SEQUENCES = 4;
 
 // Button enumerations
-const int BUTTON_RIGHT  = 0;
-const int BUTTON_UP     = 1;
-const int BUTTON_DOWN   = 2;
-const int BUTTON_LEFT   = 3;
-const int BUTTON_SELECT = 4;
-const int BUTTON_NONE   = 5;
-const int BUTTON_START_STOP = BUTTON_LEFT;
+enum class Button : uint8_t {
+  right  = 0,
+  up     = 1,
+  down   = 2,
+  left   = 3,
+  select = 4,
+  none   = 5,
+  start_stop = left,
+};
 
 const int WARNING_BEEP = 0;  // enumeration
-
 
 // Pins
 const int RELAY_BEEP = 2;   // beeper relay pin
@@ -156,7 +157,8 @@ struct SystemState_t {
   long sound_start_ms;  // system time at sound start
   long timer_length_ms; // length of countdown sequence
   int index;  // position in countdown sequence instructions
-} state;
+};
+SystemState_t state;
 
 /* Countdown Procedure */
 const unsigned long* sch;
@@ -186,7 +188,7 @@ void setup() {
   pinMode(RELAY_HORN, OUTPUT);
   pinMode(RELAY_BEEP, OUTPUT);
 
-  // Initialize display, ensuring backlight is on
+  // Initialize display, turning on backlight
   lcd.begin(16, 2);
   pinMode(LCD_BACKLIGHT_PIN, OUTPUT);
   digitalWrite(LCD_BACKLIGHT_PIN, HIGH);
@@ -205,12 +207,12 @@ void loop() {
   if (state.is_timer_running) {
     long time_remaining_ms = state.timer_length_ms - time_since_start_ms;
     horn_or_beep(time_remaining_ms);
-    diplay_timer(time_remaining_ms);
+    display_timer(time_remaining_ms);
   }
 
   // depending on which button was pushed, we perform an action
   switch (read_LCD_buttons()) {
-    case BUTTON_START_STOP: {
+    case Button::start_stop: {
         if (state.is_timer_running) {
           // Stop timer
           de_activate_sound(RELAY_HORN);
@@ -253,14 +255,21 @@ void loop() {
         break;
       }
 
-    case BUTTON_SELECT: {
+    case Button::select: {
         if (!state.is_timer_running) {
           increment_sequence_selection();
         }
         break;
       }
 
-    case BUTTON_NONE: {
+    // Do-nothing scenarios
+    case Button::right:
+      [[fallthrough]]
+    case Button::up:
+      [[fallthrough]]
+    case Button::down:
+      [[fallthrough]]
+    case Button::none: {
         break;
       }
   }
@@ -293,9 +302,9 @@ void increment_sequence_selection() {
 }
 
 
-int read_LCD_buttons() {
+Button read_LCD_buttons() {
   int adc_key_in = analogRead(LCD_BUTTON_PIN);  // read the value from the sensor
-  int button = BUTTON_NONE;
+  Button button = Button::none;
   // My V1.1 buttons when read are centered at these values: 0, 144, 329, 504, 741.
   // We add approx 50 to those values and check to see if we are close.
   // We make "nothing" the first option for speed reasons since it will be the most likely result.
@@ -304,17 +313,17 @@ int read_LCD_buttons() {
 
     // Button pressed
     if (adc_key_in < 50) {
-      button = BUTTON_RIGHT;
+      button = Button::right;
     } else if (adc_key_in < 250) {
-      button = BUTTON_UP;
+      button = Button::up;
     } else if (adc_key_in < 450) {
-      button = BUTTON_DOWN;
+      button = Button::down;
     } else if (adc_key_in < 650) {
-      button = BUTTON_LEFT;
+      button = Button::left;
     } else if (adc_key_in < 850) {
-      button = BUTTON_SELECT;
+      button = Button::select;
     } else {
-      button = BUTTON_NONE;
+      button = Button::none;
     }
 
     // Add delay to debounce
@@ -408,7 +417,7 @@ void lcd_overwrite(const char upper[16], const char lower[16]) {
 
 
 
-void diplay_timer(long time_ms) {
+void display_timer(long time_ms) {
 
   if (time_ms > -1) {
 
@@ -460,4 +469,3 @@ void diplay_timer(long time_ms) {
   }
   return;
 }
-
