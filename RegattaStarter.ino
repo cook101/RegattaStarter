@@ -19,6 +19,15 @@
 
 const int NUMBER_OF_SEQUENCES = 4;
 
+// Sound names
+const int WARNING_BEEP = 0;  // enumeration
+const int RELAY_BEEP = 2;
+const int RELAY_HORN = 11;
+
+// Pins
+const int LCD_BUTTON_PIN = 0;
+const int LCD_BACKLIGHT_PIN = 10;
+
 // Button enumerations
 enum class Button : uint8_t {
   right  = 0,
@@ -30,24 +39,16 @@ enum class Button : uint8_t {
   start_stop = left,
 };
 
-const int WARNING_BEEP = 0;  // enumeration
-
-// Pins
-const int RELAY_BEEP = 2;   // beeper relay pin
-const int RELAY_HORN = 11;  // horn relay pin
-const int LCD_BUTTON_PIN = 0;
-const int LCD_BACKLIGHT_PIN = 10;
 
 // Hardware interface for sounds
 class SoundInterface {
   public:
+    SoundInterface() = delete;
     ~SoundInterface();
     static void initialize();
     static void turnOn();
     static void turnOff();
     // static bool isOn();
-  private:
-    SoundInterface();
   protected:
     static const int relay_pin = -1;
 };
