@@ -38,6 +38,40 @@ const int RELAY_HORN = 11;  // horn relay pin
 const int LCD_BUTTON_PIN = 0;
 const int LCD_BACKLIGHT_PIN = 10;
 
+// Hardware interface for sounds
+class SoundInterface {
+  public:
+    ~SoundInterface();
+    static void initialize();
+    static void turnOn();
+    static void turnOff();
+    // static bool isOn();
+  private:
+    SoundInterface();
+  protected:
+    static const int relay_pin = -1;
+};
+void SoundInterface::initialize() {
+  pinMode(relay_pin, OUTPUT);
+};
+void SoundInterface::turnOn() {
+  digitalWrite(relay_pin, HIGH);
+}
+void SoundInterface::turnOff() {
+  digitalWrite(relay_pin, LOW);
+}
+
+class Horn: public SoundInterface {
+  protected:
+    static const int relay_pin = 11;
+};
+
+class Beep: public SoundInterface {
+  protected:
+    static const int relay_pin = 2;
+};
+
+
 // Time lengths
 const int STD_DELAY = 300; // (ms)
 const unsigned long len_of_note[] = {500, 400, 800, 1500}; // (ms)
@@ -62,32 +96,34 @@ const char* const SOUND_OFF_MSG = " ";
 
 //************************************* THREE MIN SEQ ********************************
 const unsigned long sch_3[] = { 0,   10, 20, 30, 40, 50,
-                              100, 
-                              190, 200, 
-                              280,290,300, 
-                              
-                              1*600, 600+10, 600+20, 600+30, 600+40, 600+50,
-                              900-15-20, 900-15-10, 900-15, 900,
-                              2*600-15, 2*600, 2*600+10, 2*600+20, 2*600+30, 2*600+40, 2*600+50,
-                              3*600-30, 3*600-15, 3*600,          3*600+60, 3*600+70,3*600+80,3*600+90,      3*600+100,3*600+110, 3*600+120, 3*600+130, 3*600+140, 3*600+150, 3*600+160,3*600+170, 3*600+180, 3*600+190, 3*600+200  };
-const int h_or_b3[] = {        3,   1,1,1,1,1,
+                                100,
+                                190, 200,
+                                280, 290, 300,
+
+                                1 * 600, 600 + 10, 600 + 20, 600 + 30, 600 + 40, 600 + 50,
+                                900 - 15 - 20, 900 - 15 - 10, 900 - 15, 900,
+                                2 * 600 - 15, 2 * 600, 2 * 600 + 10, 2 * 600 + 20, 2 * 600 + 30, 2 * 600 + 40, 2 * 600 + 50,
+                                3 * 600 - 30, 3 * 600 - 15, 3 * 600,          3 * 600 + 60, 3 * 600 + 70, 3 * 600 + 80, 3 * 600 + 90,      3 * 600 + 100, 3 * 600 + 110, 3 * 600 + 120, 3 * 600 + 130, 3 * 600 + 140, 3 * 600 + 150, 3 * 600 + 160, 3 * 600 + 170, 3 * 600 + 180, 3 * 600 + 190, 3 * 600 + 200
+                              };
+const int h_or_b3[] = {        3,   1, 1, 1, 1, 1,
                                1,
-                               1,1,
-                               1,1,1,
-                            2, 0,0,0,0,0,
-                            1,1,1,2,
-                            2,2,0,0,0,0,0,
-                            2,2,2,   1,1,1,1,1,      0, 0, 0, 0, 0, 0, 0, 0, 0, 0  };
+                               1, 1,
+                               1, 1, 1,
+                               2, 0, 0, 0, 0, 0,
+                               1, 1, 1, 2,
+                               2, 2, 0, 0, 0, 0, 0,
+                               2, 2, 2,   1, 1, 1, 1, 1,      0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                      };
 const int index_3 = 6 + 6 + 6 + 4 + 7 + 18 - 1;
-const long ctdwn_3 = 205*1000L; // 3*60 + 39;
+const long ctdwn_3 = 205 * 1000L; // 3*60 + 39;
 
 
 
 //************************************* FIVE MIN SEQ ********************************
 const unsigned long sch_5[] = {0, 10, 20, 30, 40, 50,
-                               1*600, 1*600 + 10, 1*600 + 20, 1*600 + 30, 1*600 + 40, 1*600 + 50,
-                               4*600, 4*600 + 10, 4*600 + 20, 4*600 + 30, 4*600 + 40, 4*600 + 50,
-                               5*600, 5*600 + 10, 5*600 + 20, 5*600 + 30, 5*600 + 40, 5*600 + 50, 5*600 + 60, 5*600 + 70, 5*600 + 80, 5*600 + 90, 5*600 + 100, 5*600 + 110, 5*600 + 120, 5*600 + 130, 5*600 + 140, 5*600 + 150, 5*600 + 160, 5*600 + 170, 5*600 + 180, 5*600 + 190, 5*600 + 200
+                               1 * 600, 1 * 600 + 10, 1 * 600 + 20, 1 * 600 + 30, 1 * 600 + 40, 1 * 600 + 50,
+                               4 * 600, 4 * 600 + 10, 4 * 600 + 20, 4 * 600 + 30, 4 * 600 + 40, 4 * 600 + 50,
+                               5 * 600, 5 * 600 + 10, 5 * 600 + 20, 5 * 600 + 30, 5 * 600 + 40, 5 * 600 + 50, 5 * 600 + 60, 5 * 600 + 70, 5 * 600 + 80, 5 * 600 + 90, 5 * 600 + 100, 5 * 600 + 110, 5 * 600 + 120, 5 * 600 + 130, 5 * 600 + 140, 5 * 600 + 150, 5 * 600 + 160, 5 * 600 + 170, 5 * 600 + 180, 5 * 600 + 190, 5 * 600 + 200
                               };
 
 const int h_or_b5[] =      {   3, 0, 0, 0, 0, 0,
@@ -96,14 +132,14 @@ const int h_or_b5[] =      {   3, 0, 0, 0, 0, 0,
                                2, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
                            };
 const int index_5 = 28 + 6 + 5 - 1;
-const long ctdwn_5 = (5 * 60 + 25)*1000L;  // (ms)
+const long ctdwn_5 = (5 * 60 + 25) * 1000L; // (ms)
 
 
 //************************************* DOSC x1********************************
 const unsigned long sch_5british[] = {0, 10, 20, 30, 40, 50,
-                                      1*600, 1*600 + 10, 1*600 + 20, 1*600 + 30, 1*600 + 40, 1*600 + 50,
-                                      4*600, 4*600 + 10, 4*600 + 20, 4*600 + 30, 4*600 + 40, 4*600 + 50,
-                                      5*600, 5*600 + 10, 5*600 + 20, 5*600 + 30, 5*600 + 40, 5*600 + 50
+                                      1 * 600, 1 * 600 + 10, 1 * 600 + 20, 1 * 600 + 30, 1 * 600 + 40, 1 * 600 + 50,
+                                      4 * 600, 4 * 600 + 10, 4 * 600 + 20, 4 * 600 + 30, 4 * 600 + 40, 4 * 600 + 50,
+                                      5 * 600, 5 * 600 + 10, 5 * 600 + 20, 5 * 600 + 30, 5 * 600 + 40, 5 * 600 + 50
                                      };
 
 const int h_or_b5british[] =      {  3, 0, 0, 0, 0, 0,
@@ -112,19 +148,19 @@ const int h_or_b5british[] =      {  3, 0, 0, 0, 0, 0,
                                      2, 0, 0, 0, 0, 0
                                   };
 const int index_5british = 4 * 6 - 1;
-const long ctdwn_5british = (5 * 60 + 8)*1000L;  // (ms)
+const long ctdwn_5british = (5 * 60 + 8) * 1000L; // (ms)
 
 //************************************* DOSC ROLLING x3 ********************************
 const unsigned long sch__3[] =   {    0,       10,       20,       30,       40,      50,
-                                      1*600,  1*600 + 10,  1*600 + 20,  1*600 + 30,  1*600 + 40,  1*600 + 50,
-                                      4*600,  4*600 + 10,  4*600 + 20,  4*600 + 30,  4*600 + 40,  4*600 + 50,
-                                      5*600,  5*600 + 10,  5*600 + 20,  5*600 + 30,  5*600 + 40,  5*600 + 50,
-                                      6*600,  6*600 + 10,  6*600 + 20,  6*600 + 30,  6*600 + 40,  6*600 + 50,
-                                      9*600,  9*600 + 10,  9*600 + 20,  9*600 + 30,  9*600 + 40,  9*600 + 50,
-                                      10*600, 10*600 + 10, 10*600 + 20, 10*600 + 30, 10*600 + 40, 10*600 + 50,
-                                      11*600, 11*600 + 10, 11*600 + 20, 11*600 + 30, 11*600 + 40, 11*600 + 50,
-                                      14*600, 14*600 + 10, 14*600 + 20, 14*600 + 30, 14*600 + 40, 14*600 + 50,
-                                      15*600, 15*600 + 10, 15*600 + 20, 15*600 + 30, 15*600 + 40, 15*600 + 50
+                                      1 * 600,  1 * 600 + 10,  1 * 600 + 20,  1 * 600 + 30,  1 * 600 + 40,  1 * 600 + 50,
+                                      4 * 600,  4 * 600 + 10,  4 * 600 + 20,  4 * 600 + 30,  4 * 600 + 40,  4 * 600 + 50,
+                                      5 * 600,  5 * 600 + 10,  5 * 600 + 20,  5 * 600 + 30,  5 * 600 + 40,  5 * 600 + 50,
+                                      6 * 600,  6 * 600 + 10,  6 * 600 + 20,  6 * 600 + 30,  6 * 600 + 40,  6 * 600 + 50,
+                                      9 * 600,  9 * 600 + 10,  9 * 600 + 20,  9 * 600 + 30,  9 * 600 + 40,  9 * 600 + 50,
+                                      10 * 600, 10 * 600 + 10, 10 * 600 + 20, 10 * 600 + 30, 10 * 600 + 40, 10 * 600 + 50,
+                                      11 * 600, 11 * 600 + 10, 11 * 600 + 20, 11 * 600 + 30, 11 * 600 + 40, 11 * 600 + 50,
+                                      14 * 600, 14 * 600 + 10, 14 * 600 + 20, 14 * 600 + 30, 14 * 600 + 40, 14 * 600 + 50,
+                                      15 * 600, 15 * 600 + 10, 15 * 600 + 20, 15 * 600 + 30, 15 * 600 + 40, 15 * 600 + 50
                                  };
 
 const int h_or_b__3[] =          {   3, 0, 0, 0, 0, 0,
@@ -141,7 +177,7 @@ const int h_or_b__3[] =          {   3, 0, 0, 0, 0, 0,
                                      2, 0, 0, 0, 0, 0
                                  };
 const int index__3 = 10 * 6 - 1;
-const long ctdwn__3 = (15 * 60 + 7)*1000L;  // (ms)
+const long ctdwn__3 = (15 * 60 + 7) * 1000L; // (ms)
 
 
 
@@ -185,8 +221,8 @@ void setup() {
   h_or_b = nullptr;
 
   // Initialize sound relays
-  pinMode(RELAY_HORN, OUTPUT);
-  pinMode(RELAY_BEEP, OUTPUT);
+  Horn::initialize();
+  Beep::initialize();
 
   // Initialize display, turning on backlight
   lcd.begin(16, 2);
@@ -341,7 +377,7 @@ void show_introduction() {
   lcd_overwrite("BY CHRIS LABORDE", "");
   delay(STD_DELAY);
   lcd_overwrite("BY CHRIS LABORDE", " & J BERENGUERES");
-  delay(3*STD_DELAY);
+  delay(3 * STD_DELAY);
   lcd_overwrite("  Select start", "    sequence");
   delay(STD_DELAY);
   return;
@@ -351,11 +387,11 @@ void show_introduction() {
 
 void activate_sound(int sound) {
   // check what instrument to sound
-  int what_beep = RELAY_HORN;
   if (sound == WARNING_BEEP) {
-    what_beep = RELAY_BEEP;
+    Beep::turnOn();
+  } else {
+    Horn::turnOn();
   }
-  digitalWrite(what_beep, HIGH);
   state.sound_start_ms = millis();
   if (sound == WARNING_BEEP)  {
     state.is_beep_on = true;
@@ -368,14 +404,13 @@ void activate_sound(int sound) {
 
 
 void de_activate_sound(int sound) {
-  int what_beep = RELAY_HORN;
   if (sound == WARNING_BEEP) {
-    what_beep = RELAY_BEEP;
+    Beep::turnOff();
     state.is_beep_on = false;
   } else {
+    Horn::turnOff();
     state.is_horn_on = false;
   }
-  digitalWrite(what_beep, LOW);
   return;
 }
 
@@ -464,7 +499,7 @@ void display_timer(long time_ms) {
 
     lcd.setCursor(7, 1);
     lcd.print("START!");
-    digitalWrite(RELAY_HORN, LOW);
+    Horn::turnOff();  // TODO:  Remove sound side-effect from display function
 
   }
   return;
