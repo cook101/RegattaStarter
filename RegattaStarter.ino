@@ -76,16 +76,18 @@ class Beep: public SoundInterface {
 
 /*
  * Interface to the display hardware.
- * Provides a simple interface by encapsulating
- * the details of the LiquidCrystal class.
+ * Provides a simple interface by encapsulating the details of the LiquidCrystal class.
+ * The LCD display has 2 rows of 16 characters.
  */
 namespace display {
   
   const uint8_t zstringSize = 17;  // numCharPerLine + 1
   
   namespace {
-    // Everything inside this anonymous namespace is private to the display namespace.
-    // That is, nothing outside the display namespace can access the lcd object.
+    /*
+     * Everything inside this anonymous namespace is private to the display namespace.
+     * That is, nothing outside the display namespace can access the lcd object.
+    */
     const uint8_t rsPin = 8;  // controls commands
     const uint8_t enablePin = 9;
     const uint8_t d0Pin = 4;
@@ -317,8 +319,8 @@ void setup() {
 
 void loop() {
 
-  long time_since_start_ms =  millis() - state.timer_start_ms;
   if (state.is_timer_running) {
+    long time_since_start_ms =  millis() - state.timer_start_ms;
     long time_remaining_ms = state.timer_length_ms - time_since_start_ms;
     horn_or_beep(time_remaining_ms);
     display_timer(time_remaining_ms);
@@ -418,11 +420,13 @@ void increment_sequence_selection() {
 
 
 Button read_LCD_buttons() {
-  int adc_key_in = analogRead(LCD_BUTTON_PIN);  // read the value from the sensor
-  Button button = Button::none;
+  
   // My V1.1 buttons when read are centered at these values: 0, 144, 329, 504, 741.
   // We add approx 50 to those values and check to see if we are close.
   // We make "nothing" the first option for speed reasons since it will be the most likely result.
+  
+  int adc_key_in = analogRead(LCD_BUTTON_PIN);  // read the value from the sensor
+  Button button = Button::none;
 
   if (adc_key_in <= 1000) {
 
