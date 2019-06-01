@@ -72,11 +72,6 @@ class Beep: public SoundInterface {
     static const int relay_pin = 2;
 };
 
-// Sound names
-const int WARNING_BEEP = 0;  // enumeration
-const int RELAY_BEEP = 2;
-const int RELAY_HORN = 11;
-
 
 
 /*
@@ -153,10 +148,6 @@ namespace display {
 
 
 
-// Time lengths
-const int STD_DELAY = 300; // (ms)
-const unsigned long len_of_note[] = {500, 400, 800, 1500}; // (ms)
-
 // Messages (LCD is 2x16 characters)
 const char* const STARTING_MSG = " ...STARTING... ";
 const char* const JASC_5_MSG   = "JASC 1x5 min    ";
@@ -174,7 +165,16 @@ const char* const SOUND_OFF_MSG = " ";
 // warning long buzz (sb)= 0,   short horn (sh) = 1, long horn (lh) =2  extralong horn 3
 // Short seq countdown // 10lb  5sh   5blank  3lh
 
+// Time lengths
+const int STD_DELAY = 300; // (ms)
+const unsigned long len_of_note[] = {500, 400, 800, 1500}; // (ms)
+
 const int NUMBER_OF_SEQUENCES = 4;
+
+// Sound names
+const int WARNING_BEEP = 0;
+const int RELAY_BEEP = 2;
+const int RELAY_HORN = 11;
 
 //************************************* THREE MIN SEQ ********************************
 const unsigned long sch_3[] = { 0,   10, 20, 30, 40, 50,
