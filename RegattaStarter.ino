@@ -15,18 +15,11 @@
 
 
 
-/***  Constants  ***/
-
-const int NUMBER_OF_SEQUENCES = 4;
-
-// Sound names
-const int WARNING_BEEP = 0;  // enumeration
-const int RELAY_BEEP = 2;
-const int RELAY_HORN = 11;
-
+/*
+ * Interface to the button hardware.
+ */
 // Pins
 const int LCD_BUTTON_PIN = 0;
-const int LCD_BACKLIGHT_PIN = 10;
 
 // Button enumerations
 enum class Button : uint8_t {
@@ -40,7 +33,14 @@ enum class Button : uint8_t {
 };
 
 
-// Hardware interface for sounds
+
+/*
+ * Interface to the sound hardware.
+ * There is a SoundInterface base class that is not intended
+ * for use but provides the interface functions.  The Horn
+ * and Bell classes define a private pin number for the 
+ * hardware and are intended for use.
+ */
 class SoundInterface {
   public:
     SoundInterface() = delete;
@@ -72,6 +72,86 @@ class Beep: public SoundInterface {
     static const int relay_pin = 2;
 };
 
+// Sound names
+const int WARNING_BEEP = 0;  // enumeration
+const int RELAY_BEEP = 2;
+const int RELAY_HORN = 11;
+
+
+
+/*
+ * Interface to the display hardware.
+ * Provides a simple interface by encapsulating
+ * the details of the LiquidCrystal class.
+ */
+namespace display {
+  
+  const uint8_t zstringSize = 17;  // numCharPerLine + 1
+  
+  namespace {
+    // Everything inside this anonymous namespace is private to the display namespace.
+    // That is, nothing outside the display namespace can access the lcd object.
+    const uint8_t rsPin = 8;  // controls commands
+    const uint8_t enablePin = 9;
+    const uint8_t d0Pin = 4;
+    const uint8_t d1Pin = 5;
+    const uint8_t d2Pin = 6;
+    const uint8_t d3Pin = 7;
+    const uint8_t backlightPin = 10;
+    const uint8_t numLines = 2;
+    const uint8_t numCharPerLine = 16;  
+    const char EMPTY_MSG[zstringSize] = "                ";
+    LiquidCrystal lcd = LiquidCrystal(rsPin, enablePin, d0Pin, d1Pin, d2Pin, d3Pin);
+  }  // namespace
+  
+  void initialize() {
+    lcd.begin(numCharPerLine, numLines);
+    pinMode(backlightPin, OUTPUT);
+  }
+  
+  void backlightOn() {
+    digitalWrite(backlightPin, HIGH);
+  }
+  
+  void backlightOff() {
+    digitalWrite(backlightPin, LOW);
+  }
+
+  void overwrite(const char* upper, const char* lower) {
+    lcd.setCursor(0, 0);
+    lcd.print(EMPTY_MSG);
+    lcd.setCursor(0, 1);
+    lcd.print(EMPTY_MSG);
+    lcd.setCursor(0, 0);
+    lcd.print(upper);
+    lcd.setCursor(0, 1);
+    lcd.print(lower);
+    return;
+  }
+
+  void clear() {
+    overwrite("", "");
+  }
+
+  void overwriteUpper(const char* upper) {
+    lcd.setCursor(0, 0);
+    lcd.print(EMPTY_MSG);
+    lcd.setCursor(0, 0);
+    lcd.print(upper);
+    return;
+  }
+  
+  void overwriteLower(const char* lower) {
+    lcd.setCursor(0, 1);
+    lcd.print(EMPTY_MSG);
+    lcd.setCursor(0, 1);
+    lcd.print(lower);
+    return;
+  }
+
+}  // namespace display
+
+
 
 // Time lengths
 const int STD_DELAY = 300; // (ms)
@@ -83,7 +163,6 @@ const char* const JASC_5_MSG   = "JASC 1x5 min    ";
 const char* const JASC_3_MSG   = "JASC 1x3 min    ";
 const char* const DOSC_1x5_MSG = "DOSC 1x5 min    ";
 const char* const DOSC_3x5_MSG = "DOSC 3x5 min    ";
-const char* const EMPTY_MSG    = "                ";
 const char* const BEG_TIME_MSG = "00:00           ";
 const char* const CANCEL_MSG   = "SEQ. CANCELLED  ";
 const char* const HORN_ON_MSG = "H";
@@ -94,6 +173,8 @@ const char* const SOUND_OFF_MSG = " ";
 // Horn sequences
 // warning long buzz (sb)= 0,   short horn (sh) = 1, long horn (lh) =2  extralong horn 3
 // Short seq countdown // 10lb  5sh   5blank  3lh
+
+const int NUMBER_OF_SEQUENCES = 4;
 
 //************************************* THREE MIN SEQ ********************************
 const unsigned long sch_3[] = { 0,   10, 20, 30, 40, 50,
@@ -201,9 +282,6 @@ SystemState_t state;
 const unsigned long* sch;
 const int* h_or_b;
 
-LiquidCrystal lcd(8, 9, 4, 5, 6, 7); // select the pins used on the LCD panel
-
-
 
 /***  Functions  ***/
 
@@ -226,9 +304,8 @@ void setup() {
   Beep::initialize();
 
   // Initialize display, turning on backlight
-  lcd.begin(16, 2);
-  pinMode(LCD_BACKLIGHT_PIN, OUTPUT);
-  digitalWrite(LCD_BACKLIGHT_PIN, HIGH);
+  display::initialize();
+  display::backlightOn();
 
   show_introduction();
 
@@ -254,30 +331,30 @@ void loop() {
           // Stop timer
           de_activate_sound(RELAY_HORN);
           de_activate_sound(RELAY_BEEP);
-          lcd_overwrite(CANCEL_MSG, "");
+          display::overwrite(CANCEL_MSG, "");
           state.is_timer_running = false;
         } else {
           // Start timer
           if (state.selected_sequence == 0) {
-            lcd_overwrite(STARTING_MSG, JASC_5_MSG);
+            display::overwrite(STARTING_MSG, JASC_5_MSG);
             state.timer_length_ms = ctdwn_5;
             sch = sch_5;
             h_or_b = h_or_b5;
             state.index = index_5;
           } else if (state.selected_sequence == 1) {
-            lcd_overwrite(STARTING_MSG, JASC_3_MSG);
+            display::overwrite(STARTING_MSG, JASC_3_MSG);
             state.timer_length_ms = ctdwn_3;
             sch = sch_3;
             h_or_b = h_or_b3;
             state.index = index_3;
           } else if (state.selected_sequence == 2) {
-            lcd_overwrite(STARTING_MSG, DOSC_1x5_MSG);
+            display::overwrite(STARTING_MSG, DOSC_1x5_MSG);
             state.timer_length_ms = ctdwn_5british;
             sch = sch_5british;
             h_or_b = h_or_b5british;
             state.index = index_5british;
           } else if (state.selected_sequence == 3) {
-            lcd_overwrite(STARTING_MSG, DOSC_3x5_MSG);
+            display::overwrite(STARTING_MSG, DOSC_3x5_MSG);
             state.timer_length_ms = ctdwn__3;
             sch = sch__3;
             h_or_b = h_or_b__3;
@@ -316,7 +393,8 @@ void loop() {
 
 void increment_sequence_selection() {
 
-  const char* msg = EMPTY_MSG;
+  const char* msg = "";
+  display::clear();
 
   state.selected_sequence += 1;
   if (state.selected_sequence >= NUMBER_OF_SEQUENCES) {
@@ -333,7 +411,7 @@ void increment_sequence_selection() {
     msg = DOSC_3x5_MSG;
   }
 
-  lcd_overwrite(msg, EMPTY_MSG);
+  display::overwrite(msg, "");
 
   return;
 }
@@ -375,11 +453,11 @@ Button read_LCD_buttons() {
 
 
 void show_introduction() {
-  lcd_overwrite("BY CHRIS LABORDE", "");
+  display::overwrite("BY CHRIS LABORDE", "");
   delay(STD_DELAY);
-  lcd_overwrite("BY CHRIS LABORDE", " & J BERENGUERES");
+  display::overwrite("BY CHRIS LABORDE", " & J BERENGUERES");
   delay(3 * STD_DELAY);
-  lcd_overwrite("  Select start", "    sequence");
+  display::overwrite("  Select start", "    sequence");
   delay(STD_DELAY);
   return;
 }
@@ -439,67 +517,31 @@ void horn_or_beep(unsigned long time_ms) {
 
 
 
-void lcd_overwrite(const char upper[16], const char lower[16]) {
-  lcd.setCursor(0, 0);
-  lcd.print(EMPTY_MSG);
-  lcd.setCursor(0, 1);
-  lcd.print(EMPTY_MSG);
-  lcd.setCursor(0, 0);
-  lcd.print(upper);
-  lcd.setCursor(0, 1);
-  lcd.print(lower);
-  return;
-}
-
-
-
 void display_timer(long time_ms) {
+
+  char text[display::zstringSize];
 
   if (time_ms > -1) {
 
     int seconds = (time_ms / 1000) % 60;
     int minutes = (time_ms / 1000) / 60;
-    int sec_pos = 3;
 
-    lcd.setCursor(0, 1);
-    lcd.print(" ");
-
-    lcd.setCursor(1, 1);
-    lcd.print(minutes);
-
-    lcd.setCursor(2, 1);
-    lcd.print(":");
-
-    if (seconds < 10) {
-      sec_pos += 1;
-      lcd.setCursor(3, 1);
-      lcd.print("0");
-    }
-    lcd.setCursor(sec_pos, 1);
-    lcd.print(seconds);
-
-    // Separator
-    lcd.setCursor(5, 1);
-    lcd.print("  ");
-
-    // Display sound state
-    lcd.setCursor(7, 1);
+    const char* msg;
     if (state.is_horn_on) {
-      lcd.print(HORN_ON_MSG);
+      msg = HORN_ON_MSG;
     } else if (state.is_beep_on) {
-      lcd.print(BEEP_ON_MSG);
+      msg = BEEP_ON_MSG;
+
     } else {
-      lcd.print(SOUND_OFF_MSG);
+      msg = SOUND_OFF_MSG;
     }
 
-    // Blank out rest of display
-    lcd.setCursor(8, 1);
-    lcd.print("        ");
+    snprintf(text, display::zstringSize, " %1d:%02d  %1s        ", minutes, seconds, msg);
+    display::overwriteUpper(text);
 
   } else {
 
-    lcd.setCursor(7, 1);
-    lcd.print("START!");
+    display::overwriteLower("START!");
     Horn::turnOff();  // TODO:  Remove sound side-effect from display function
 
   }
