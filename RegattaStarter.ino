@@ -156,10 +156,9 @@ const char* const JASC_5_MSG   = "JASC 1x5 min    ";
 const char* const JASC_3_MSG   = "JASC 1x3 min    ";
 const char* const DOSC_1x5_MSG = "DOSC 1x5 min    ";
 const char* const DOSC_3x5_MSG = "DOSC 3x5 min    ";
-const char* const BEG_TIME_MSG = "00:00           ";
 const char* const CANCEL_MSG   = "SEQ. CANCELLED  ";
-const char* const HORN_ON_MSG = "H";
-const char* const BEEP_ON_MSG = "B";
+const char* const HORN_ON_MSG  = "H";
+const char* const BEEP_ON_MSG  = "B";
 const char* const SOUND_OFF_MSG = " ";
 
 
@@ -530,14 +529,11 @@ void display_timer(long time_ms) {
     int seconds = (time_ms / 1000) % 60;
     int minutes = (time_ms / 1000) / 60;
 
-    const char* msg;
+    const char* msg = SOUND_OFF_MSG;
     if (state.is_horn_on) {
       msg = HORN_ON_MSG;
     } else if (state.is_beep_on) {
       msg = BEEP_ON_MSG;
-
-    } else {
-      msg = SOUND_OFF_MSG;
     }
 
     snprintf(text, display::zstringSize, " %1d:%02d  %1s        ", minutes, seconds, msg);
