@@ -471,15 +471,12 @@ void activate_sound(int sound) {
   // check what instrument to sound
   if (sound == WARNING_BEEP) {
     Beep::turnOn();
-  } else {
-    Horn::turnOn();
-  }
-  state.sound_start_ms = millis();
-  if (sound == WARNING_BEEP)  {
     state.is_beep_on = true;
   } else {
+    Horn::turnOn();
     state.is_horn_on = true;
   }
+  state.sound_start_ms = millis();
   return;
 }
 
