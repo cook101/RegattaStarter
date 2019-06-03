@@ -467,7 +467,7 @@ void show_introduction() {
 
 
 
-void activate_sound(int sound) {
+void activate_sound(const int sound) {
   // check what instrument to sound
   if (sound == WARNING_BEEP) {
     Beep::turnOn();
@@ -482,7 +482,7 @@ void activate_sound(int sound) {
 
 
 
-void de_activate_sound(int sound) {
+void de_activate_sound(const int sound) {
   if (sound == WARNING_BEEP) {
     Beep::turnOff();
     state.is_beep_on = false;
@@ -495,7 +495,7 @@ void de_activate_sound(int sound) {
 
 
 
-void horn_or_beep(unsigned long time_ms) {
+void horn_or_beep(const unsigned long time_ms) {
   if (state.is_horn_on || state.is_beep_on) {
     if ( ((millis() - state.sound_start_ms) > len_of_note[h_or_b[state.index]] ) ) {
       de_activate_sound(h_or_b[state.index]);
@@ -516,13 +516,19 @@ void horn_or_beep(unsigned long time_ms) {
 }
 
 
-
-void display_timer(long time_ms) {
+/*
+ * Displays on the LCD screen the time remaining on the 
+ * countdown timer.  The time remaining is read 
+ * from the state struct.
+ */
+void display_timer(const long time_ms) {
 
   char text[display::zstringSize];
 
   if (time_ms > -1) {
 
+    // Timer is running
+    // Display time remaining and sounds on/off.
     int seconds = (time_ms / 1000) % 60;
     int minutes = (time_ms / 1000) / 60;
 
@@ -533,13 +539,12 @@ void display_timer(long time_ms) {
       msg = BEEP_ON_MSG;
     }
 
-    snprintf(text, display::zstringSize, " %1d:%02d  %1s        ", minutes, seconds, msg);
+    snprintf(text, display::zstringSize, " %2d:%02d  %1s        ", minutes, seconds, msg);
     display::overwriteUpper(text);
 
   } else {
-
+    // Timer has finished
     display::overwriteLower("START!");
-    Horn::turnOff();  // TODO:  Remove sound side-effect from display function
 
   }
   return;
