@@ -13,6 +13,7 @@
 
 #include <LiquidCrystal.h>
 
+#include "Schedule.hpp"
 
 
 /*
@@ -273,47 +274,6 @@ struct SystemState_t {
   long sound_start_ms;  // system time at sound start
 };
 SystemState_t state;
-
-
-
-/* 
- * Countdown Schedule
- * 
- * This class is used to wrap the countdown schedule so that it cannot 
- * become unsynchronized.  Once the constructor has been called, the 
- * only possible interactions are to get information about the next step
- * in the schedule and to move the schedule a step forward.
-*/
-class Schedule {
-  public:
-    Schedule(const unsigned long* sch, const int* h_or_b, size_t size_schedule, long timer_length_ms);
-    Schedule() {};
-    ~Schedule() {};
-    void incrementIndex() {
-      index--;
-    };
-    unsigned long getSch() {
-      return sch[index];
-    }
-    int getSound() {
-      return h_or_b[index];
-    }
-    long getTimerLength_ms() {
-      return timerLength_ms;
-    }
-
-  private:
-    const unsigned long* sch = nullptr;
-    const int* h_or_b = nullptr;
-    size_t index = -1;  // position in countdown sequence instructions
-    long timerLength_ms = -1;   // length of countdown sequence
-};
-
-Schedule::Schedule(const unsigned long* sch_, const int* h_or_b_, size_t size_schedule, long timer_length_ms)
-  : sch(sch_), h_or_b(h_or_b_), index(size_schedule), timerLength_ms(timer_length_ms)
-{
-  return;
-}
 
 Schedule schedule;
 
