@@ -9,8 +9,9 @@
 
 #include "Schedule.hpp"
 
-Schedule::Schedule(const unsigned long* sch_, const int* h_or_b_, unsigned int size_schedule, long timer_length_ms)
-  : sch(sch_), h_or_b(h_or_b_), index(size_schedule), timerLength_ms(timer_length_ms)
+Schedule::Schedule(const unsigned long* sch_, const int* h_or_b_, 
+                   unsigned int size_schedule, long timer_length_ms, const char* title_)
+  : sch(sch_), h_or_b(h_or_b_), index(size_schedule), timerLength_ms(timer_length_ms), title(title_)
 {
   return;
 }

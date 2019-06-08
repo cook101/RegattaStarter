@@ -426,18 +426,15 @@ Button read_LCD_buttons() {
 */
 void set_up_timer_schedule() {
   if (state.selected_sequence == 0) {
-    display::overwrite(STARTING_MSG, JASC_5_MSG);
-    schedule = Schedule(sch_5, h_or_b5, index_5, ctdwn_5);
+    schedule = Schedule(sch_5, h_or_b5, index_5, ctdwn_5, JASC_5_MSG);
   } else if (state.selected_sequence == 1) {
-    display::overwrite(STARTING_MSG, JASC_3_MSG);
-    schedule = Schedule(sch_3, h_or_b3, index_3, ctdwn_3);
+    schedule = Schedule(sch_3, h_or_b3, index_3, ctdwn_3, JASC_3_MSG);
   } else if (state.selected_sequence == 2) {
-    display::overwrite(STARTING_MSG, DOSC_1x5_MSG);
-    schedule = Schedule(sch_5british, h_or_b5british, index_5british, ctdwn_5british);
+    schedule = Schedule(sch_5british, h_or_b5british, index_5british, ctdwn_5british, DOSC_1x5_MSG);
   } else if (state.selected_sequence == 3) {
-    display::overwrite(STARTING_MSG, DOSC_3x5_MSG);
-    schedule = Schedule(sch__3, h_or_b__3, index__3, ctdwn__3);
+    schedule = Schedule(sch__3, h_or_b__3, index__3, ctdwn__3, DOSC_3x5_MSG);
   }
+  display::overwrite(STARTING_MSG, schedule.getTitle());
   return;
 }
 
