@@ -16,8 +16,8 @@
 
 
 /*
- * Interface to the button hardware.
- */
+   Interface to the button hardware.
+*/
 // Pins
 const int LCD_BUTTON_PIN = 0;
 
@@ -35,12 +35,12 @@ enum class Button : uint8_t {
 
 
 /*
- * Interface to the sound hardware.
- * There is a SoundInterface base class that is not intended
- * for use but provides the interface functions.  The Horn
- * and Bell classes define a private pin number for the 
- * hardware and are intended for use.
- */
+   Interface to the sound hardware.
+   There is a SoundInterface base class that is not intended
+   for use but provides the interface functions.  The Horn
+   and Bell classes define a private pin number for the
+   hardware and are intended for use.
+*/
 class SoundInterface {
   public:
     SoundInterface() = delete;
@@ -50,101 +50,101 @@ class SoundInterface {
     static void turnOff();
     // static bool isOn();
   protected:
-    static const int relay_pin = -1;
+    static const int kRelayPin = -1;
 };
 void SoundInterface::initialize() {
-  pinMode(relay_pin, OUTPUT);
+  pinMode(kRelayPin, OUTPUT);
 };
 void SoundInterface::turnOn() {
-  digitalWrite(relay_pin, HIGH);
+  digitalWrite(kRelayPin, HIGH);
 }
 void SoundInterface::turnOff() {
-  digitalWrite(relay_pin, LOW);
+  digitalWrite(kRelayPin, LOW);
 }
 
 class Horn: public SoundInterface {
   protected:
-    static const int relay_pin = 11;
+    static const int kRelayPin = 11;
 };
 
 class Beep: public SoundInterface {
   protected:
-    static const int relay_pin = 2;
+    static const int kRelayPin = 2;
 };
 
 
 
 /*
- * Interface to the display hardware.
- * Provides a simple interface by encapsulating the details of the LiquidCrystal class.
- * The LCD display has 2 rows of 16 characters.
- */
+   Interface to the display hardware.
+   Provides a simple interface by encapsulating the details of the LiquidCrystal class.
+   The LCD display has 2 rows of 16 characters.
+*/
 namespace display {
-  
-  const uint8_t zstringSize = 17;  // numCharPerLine + 1
-  
-  namespace {
-    /*
-     * Everything inside this anonymous namespace is private to the display namespace.
-     * That is, nothing outside the display namespace can access the lcd object.
-    */
-    const uint8_t rsPin = 8;  // controls commands
-    const uint8_t enablePin = 9;
-    const uint8_t d0Pin = 4;
-    const uint8_t d1Pin = 5;
-    const uint8_t d2Pin = 6;
-    const uint8_t d3Pin = 7;
-    const uint8_t backlightPin = 10;
-    const uint8_t numLines = 2;
-    const uint8_t numCharPerLine = 16;  
-    const char EMPTY_MSG[zstringSize] = "                ";
-    LiquidCrystal lcd = LiquidCrystal(rsPin, enablePin, d0Pin, d1Pin, d2Pin, d3Pin);
-  }  // namespace
-  
-  void initialize() {
-    lcd.begin(numCharPerLine, numLines);
-    pinMode(backlightPin, OUTPUT);
-  }
-  
-  void backlightOn() {
-    digitalWrite(backlightPin, HIGH);
-  }
-  
-  void backlightOff() {
-    digitalWrite(backlightPin, LOW);
-  }
 
-  void overwrite(const char* upper, const char* lower) {
-    lcd.setCursor(0, 0);
-    lcd.print(EMPTY_MSG);
-    lcd.setCursor(0, 1);
-    lcd.print(EMPTY_MSG);
-    lcd.setCursor(0, 0);
-    lcd.print(upper);
-    lcd.setCursor(0, 1);
-    lcd.print(lower);
-    return;
-  }
+const uint8_t zstringSize = 17;  // numCharPerLine + 1
 
-  void clear() {
-    overwrite("", "");
-  }
+namespace {
+/*
+   Everything inside this anonymous namespace is private to the display namespace.
+   That is, nothing outside the display namespace can access the lcd object.
+*/
+const uint8_t rsPin = 8;  // controls commands
+const uint8_t enablePin = 9;
+const uint8_t d0Pin = 4;
+const uint8_t d1Pin = 5;
+const uint8_t d2Pin = 6;
+const uint8_t d3Pin = 7;
+const uint8_t backlightPin = 10;
+const uint8_t numLines = 2;
+const uint8_t numCharPerLine = 16;
+const char EMPTY_MSG[zstringSize] = "                ";
+LiquidCrystal lcd = LiquidCrystal(rsPin, enablePin, d0Pin, d1Pin, d2Pin, d3Pin);
+}  // namespace
 
-  void overwriteUpper(const char* upper) {
-    lcd.setCursor(0, 0);
-    lcd.print(EMPTY_MSG);
-    lcd.setCursor(0, 0);
-    lcd.print(upper);
-    return;
-  }
-  
-  void overwriteLower(const char* lower) {
-    lcd.setCursor(0, 1);
-    lcd.print(EMPTY_MSG);
-    lcd.setCursor(0, 1);
-    lcd.print(lower);
-    return;
-  }
+void initialize() {
+  lcd.begin(numCharPerLine, numLines);
+  pinMode(backlightPin, OUTPUT);
+}
+
+void backlightOn() {
+  digitalWrite(backlightPin, HIGH);
+}
+
+void backlightOff() {
+  digitalWrite(backlightPin, LOW);
+}
+
+void overwrite(const char* upper, const char* lower) {
+  lcd.setCursor(0, 0);
+  lcd.print(EMPTY_MSG);
+  lcd.setCursor(0, 1);
+  lcd.print(EMPTY_MSG);
+  lcd.setCursor(0, 0);
+  lcd.print(upper);
+  lcd.setCursor(0, 1);
+  lcd.print(lower);
+  return;
+}
+
+void clear() {
+  overwrite("", "");
+}
+
+void overwriteUpper(const char* upper) {
+  lcd.setCursor(0, 0);
+  lcd.print(EMPTY_MSG);
+  lcd.setCursor(0, 0);
+  lcd.print(upper);
+  return;
+}
+
+void overwriteLower(const char* lower) {
+  lcd.setCursor(0, 1);
+  lcd.print(EMPTY_MSG);
+  lcd.setCursor(0, 1);
+  lcd.print(lower);
+  return;
+}
 
 }  // namespace display
 
@@ -157,9 +157,6 @@ const char* const JASC_3_MSG   = "JASC 1x3 min    ";
 const char* const DOSC_1x5_MSG = "DOSC 1x5 min    ";
 const char* const DOSC_3x5_MSG = "DOSC 3x5 min    ";
 const char* const CANCEL_MSG   = "SEQ. CANCELLED  ";
-const char* const HORN_ON_MSG  = "H";
-const char* const BEEP_ON_MSG  = "B";
-const char* const SOUND_OFF_MSG = " ";
 
 
 // Horn sequences
@@ -274,14 +271,51 @@ struct SystemState_t {
   short selected_sequence;  // countdown sequence selection
   long timer_start_ms;  // system time at sequence start
   long sound_start_ms;  // system time at sound start
-  long timer_length_ms; // length of countdown sequence
-  int index;  // position in countdown sequence instructions
 };
 SystemState_t state;
 
-/* Countdown Procedure */
-const unsigned long* sch;
-const int* h_or_b;
+
+
+/* 
+ * Countdown Schedule
+ * 
+ * This class is used to wrap the countdown schedule so that it cannot 
+ * become unsynchronized.  Once the constructor has been called, the 
+ * only possible interactions are to get information about the next step
+ * in the schedule and to move the schedule a step forward.
+*/
+class Schedule {
+  public:
+    Schedule(const unsigned long* sch, const int* h_or_b, size_t size_schedule, long timer_length_ms);
+    Schedule() {};
+    ~Schedule() {};
+    void incrementIndex() {
+      index--;
+    };
+    unsigned long getSch() {
+      return sch[index];
+    }
+    int getSound() {
+      return h_or_b[index];
+    }
+    long getTimerLength_ms() {
+      return timerLength_ms;
+    }
+
+  private:
+    const unsigned long* sch = nullptr;
+    const int* h_or_b = nullptr;
+    size_t index = -1;  // position in countdown sequence instructions
+    long timerLength_ms = -1;   // length of countdown sequence
+};
+
+Schedule::Schedule(const unsigned long* sch_, const int* h_or_b_, size_t size_schedule, long timer_length_ms)
+  : sch(sch_), h_or_b(h_or_b_), index(size_schedule), timerLength_ms(timer_length_ms)
+{
+  return;
+}
+
+Schedule schedule;
 
 
 /***  Functions  ***/
@@ -295,10 +329,6 @@ void setup() {
   state.selected_sequence = 0;
   state.timer_start_ms = -1;
   state.sound_start_ms = -1;
-  state.timer_length_ms = -1;
-  state.index = -1;
-  sch = nullptr;
-  h_or_b = nullptr;
 
   // Initialize sound relays
   Horn::initialize();
@@ -319,13 +349,14 @@ void setup() {
 void loop() {
 
   if (state.is_timer_running) {
+    // Make sounds and display status when the time comes
     long time_since_start_ms =  millis() - state.timer_start_ms;
-    long time_remaining_ms = state.timer_length_ms - time_since_start_ms;
+    long time_remaining_ms = schedule.getTimerLength_ms() - time_since_start_ms;
     horn_or_beep(time_remaining_ms);
     display_timer(time_remaining_ms);
   }
 
-  // depending on which button was pushed, we perform an action
+  // Depending on which button was pushed, we perform an action
   switch (read_LCD_buttons()) {
     case Button::start_stop: {
         if (state.is_timer_running) {
@@ -336,31 +367,7 @@ void loop() {
           state.is_timer_running = false;
         } else {
           // Start timer
-          if (state.selected_sequence == 0) {
-            display::overwrite(STARTING_MSG, JASC_5_MSG);
-            state.timer_length_ms = ctdwn_5;
-            sch = sch_5;
-            h_or_b = h_or_b5;
-            state.index = index_5;
-          } else if (state.selected_sequence == 1) {
-            display::overwrite(STARTING_MSG, JASC_3_MSG);
-            state.timer_length_ms = ctdwn_3;
-            sch = sch_3;
-            h_or_b = h_or_b3;
-            state.index = index_3;
-          } else if (state.selected_sequence == 2) {
-            display::overwrite(STARTING_MSG, DOSC_1x5_MSG);
-            state.timer_length_ms = ctdwn_5british;
-            sch = sch_5british;
-            h_or_b = h_or_b5british;
-            state.index = index_5british;
-          } else if (state.selected_sequence == 3) {
-            display::overwrite(STARTING_MSG, DOSC_3x5_MSG);
-            state.timer_length_ms = ctdwn__3;
-            sch = sch__3;
-            h_or_b = h_or_b__3;
-            state.index = index__3;
-          }
+          set_up_timer_schedule();
           state.is_horn_on = false;
           state.is_beep_on = false;
           state.timer_start_ms = millis();
@@ -419,11 +426,11 @@ void increment_sequence_selection() {
 
 
 Button read_LCD_buttons() {
-  
+
   // My V1.1 buttons when read are centered at these values: 0, 144, 329, 504, 741.
   // We add approx 50 to those values and check to see if we are close.
   // We make "nothing" the first option for speed reasons since it will be the most likely result.
-  
+
   int adc_key_in = analogRead(LCD_BUTTON_PIN);  // read the value from the sensor
   Button button = Button::none;
 
@@ -454,7 +461,30 @@ Button read_LCD_buttons() {
 }
 
 
+/*
 
+*/
+void set_up_timer_schedule() {
+  if (state.selected_sequence == 0) {
+    display::overwrite(STARTING_MSG, JASC_5_MSG);
+    schedule = Schedule(sch_5, h_or_b5, index_5, ctdwn_5);
+  } else if (state.selected_sequence == 1) {
+    display::overwrite(STARTING_MSG, JASC_3_MSG);
+    schedule = Schedule(sch_3, h_or_b3, index_3, ctdwn_3);
+  } else if (state.selected_sequence == 2) {
+    display::overwrite(STARTING_MSG, DOSC_1x5_MSG);
+    schedule = Schedule(sch_5british, h_or_b5british, index_5british, ctdwn_5british);
+  } else if (state.selected_sequence == 3) {
+    display::overwrite(STARTING_MSG, DOSC_3x5_MSG);
+    schedule = Schedule(sch__3, h_or_b__3, index__3, ctdwn__3);
+  }
+  return;
+}
+
+
+/*
+   Writes introductory text to the display.
+*/
 void show_introduction() {
   display::overwrite("BY CHRIS LABORDE", "");
   delay(STD_DELAY);
@@ -467,6 +497,9 @@ void show_introduction() {
 
 
 
+/*
+   Turns on a sound.
+*/
 void activate_sound(const int sound) {
   // check what instrument to sound
   if (sound == WARNING_BEEP) {
@@ -482,6 +515,9 @@ void activate_sound(const int sound) {
 
 
 
+/*
+   Turns off a sound.
+*/
 void de_activate_sound(const int sound) {
   if (sound == WARNING_BEEP) {
     Beep::turnOff();
@@ -497,19 +533,19 @@ void de_activate_sound(const int sound) {
 
 void horn_or_beep(const unsigned long time_ms) {
   if (state.is_horn_on || state.is_beep_on) {
-    if ( ((millis() - state.sound_start_ms) > len_of_note[h_or_b[state.index]] ) ) {
-      de_activate_sound(h_or_b[state.index]);
-      state.index -= 1;
+    if ( ((millis() - state.sound_start_ms) > len_of_note[schedule.getSound()] ) ) {
+      de_activate_sound(schedule.getSound());
+      schedule.incrementIndex();
     }
   } else {
-    unsigned long a_time_ms = (sch[state.index] * 100);
+    unsigned long a_time_ms = (schedule.getSch() * 100);
     //Serial.println("long v = (long) (sch[state.index]*1000);");
     //Serial.println(state.index);
     //Serial.println(s);
     //Serial.println(v);
 
     if (time_ms < a_time_ms + 1000) {
-      activate_sound(h_or_b[state.index]);
+      activate_sound(schedule.getSound());
     }
   }
   return;
@@ -517,12 +553,15 @@ void horn_or_beep(const unsigned long time_ms) {
 
 
 /*
- * Displays on the LCD screen the time remaining on the 
- * countdown timer.  The time remaining is read 
- * from the state struct.
- */
+   Displays on the LCD screen the time remaining on the
+   countdown timer.  The time remaining is read
+   from the state struct.
+*/
 void display_timer(const long time_ms) {
 
+  const char* const kHornOnMessage = "H";
+  const char* const kBeepOnMessage  = "B";
+  const char* const kSoundOffMessage = " ";
   char text[display::zstringSize];
 
   if (time_ms > -1) {
@@ -532,11 +571,11 @@ void display_timer(const long time_ms) {
     int seconds = (time_ms / 1000) % 60;
     int minutes = (time_ms / 1000) / 60;
 
-    const char* msg = SOUND_OFF_MSG;
+    const char* msg = kSoundOffMessage;
     if (state.is_horn_on) {
-      msg = HORN_ON_MSG;
+      msg = kHornOnMessage;
     } else if (state.is_beep_on) {
-      msg = BEEP_ON_MSG;
+      msg = kBeepOnMessage;
     }
 
     snprintf(text, display::zstringSize, " %2d:%02d  %1s        ", minutes, seconds, msg);
