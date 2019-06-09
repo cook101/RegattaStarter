@@ -20,7 +20,7 @@
    Interface to the button hardware.
 */
 // Pins
-const int LCD_BUTTON_PIN = 0;
+const int kLcdButtonPin = 0;
 
 // Button enumerations
 enum class Button : uint8_t {
@@ -82,44 +82,53 @@ class Beep: public SoundInterface {
 */
 namespace display {
 
-const uint8_t zstringSize = 17;  // numCharPerLine + 1
+const uint8_t kZstringSize = 17;  // numCharPerLine + 1
 
 namespace {
 /*
    Everything inside this anonymous namespace is private to the display namespace.
    That is, nothing outside the display namespace can access the lcd object.
 */
-const uint8_t rsPin = 8;  // controls commands
-const uint8_t enablePin = 9;
-const uint8_t d0Pin = 4;
-const uint8_t d1Pin = 5;
-const uint8_t d2Pin = 6;
-const uint8_t d3Pin = 7;
-const uint8_t backlightPin = 10;
-const uint8_t numLines = 2;
-const uint8_t numCharPerLine = 16;
-const char EMPTY_MSG[zstringSize] = "                ";
-LiquidCrystal lcd = LiquidCrystal(rsPin, enablePin, d0Pin, d1Pin, d2Pin, d3Pin);
+
+// Display characteristics
+const uint8_t kNumLines = 2;
+const uint8_t kNumCharPerLine = 16;
+
+// Text that displays an empty message
+const char kEmptyMessage[kZstringSize] = "                ";
+
+// Hardware pins
+const uint8_t kRsPin = 8;  // controls commands
+const uint8_t kEnablePin = 9;
+const uint8_t kD0Pin = 4;
+const uint8_t kD1Pin = 5;
+const uint8_t kD2Pin = 6;
+const uint8_t kD3Pin = 7;
+const uint8_t kBacklightPin = 10;
+
+// Display interface
+LiquidCrystal lcd = LiquidCrystal(kRsPin, kEnablePin, kD0Pin, kD1Pin, kD2Pin, kD3Pin);
+
 }  // namespace
 
 void initialize() {
-  lcd.begin(numCharPerLine, numLines);
-  pinMode(backlightPin, OUTPUT);
+  lcd.begin(kNumCharPerLine, kNumLines);
+  pinMode(kBacklightPin, OUTPUT);
 }
 
 void backlightOn() {
-  digitalWrite(backlightPin, HIGH);
+  digitalWrite(kBacklightPin, HIGH);
 }
 
 void backlightOff() {
-  digitalWrite(backlightPin, LOW);
+  digitalWrite(kBacklightPin, LOW);
 }
 
-void overwrite(const char* upper, const char* lower) {
+void overwrite(const char* const upper, const char* const lower) {
   lcd.setCursor(0, 0);
-  lcd.print(EMPTY_MSG);
+  lcd.print(kEmptyMessage);
   lcd.setCursor(0, 1);
-  lcd.print(EMPTY_MSG);
+  lcd.print(kEmptyMessage);
   lcd.setCursor(0, 0);
   lcd.print(upper);
   lcd.setCursor(0, 1);
@@ -131,17 +140,17 @@ void clear() {
   overwrite("", "");
 }
 
-void overwriteUpper(const char* upper) {
+void overwriteUpper(const char* const upper) {
   lcd.setCursor(0, 0);
-  lcd.print(EMPTY_MSG);
+  lcd.print(kEmptyMessage);
   lcd.setCursor(0, 0);
   lcd.print(upper);
   return;
 }
 
-void overwriteLower(const char* lower) {
+void overwriteLower(const char* const lower) {
   lcd.setCursor(0, 1);
-  lcd.print(EMPTY_MSG);
+  lcd.print(kEmptyMessage);
   lcd.setCursor(0, 1);
   lcd.print(lower);
   return;
@@ -195,7 +204,7 @@ const int h_or_b3[] = {        3,   1, 1, 1, 1, 1,
                                2, 2, 0, 0, 0, 0, 0,
                                2, 2, 2,   1, 1, 1, 1, 1,      0, 0, 0, 0, 0, 0, 0, 0, 0, 0
                       };
-const int index_3 = 6 + 6 + 6 + 4 + 7 + 18 - 1;
+const unsigned int index_3 = 6 + 6 + 6 + 4 + 7 + 18 - 1;
 const long ctdwn_3 = 205 * 1000L; // 3*60 + 39;
 
 
@@ -212,7 +221,7 @@ const int h_or_b5[] =      {   3, 0, 0, 0, 0, 0,
                                2, 0, 0, 0, 0, 0,
                                2, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
                            };
-const int index_5 = 28 + 6 + 5 - 1;
+const unsigned int index_5 = 28 + 6 + 5 - 1;
 const long ctdwn_5 = (5 * 60 + 25) * 1000L; // (ms)
 
 
@@ -228,7 +237,7 @@ const int h_or_b5british[] =      {  3, 0, 0, 0, 0, 0,
                                      2, 0, 0, 0, 0, 0,
                                      2, 0, 0, 0, 0, 0
                                   };
-const int index_5british = 4 * 6 - 1;
+const unsigned int index_5british = 4 * 6 - 1;
 const long ctdwn_5british = (5 * 60 + 8) * 1000L; // (ms)
 
 //************************************* DOSC ROLLING x3 ********************************
@@ -257,12 +266,17 @@ const int h_or_b__3[] =          {   3, 0, 0, 0, 0, 0,
                                      2, 0, 0, 0, 0, 0,
                                      2, 0, 0, 0, 0, 0
                                  };
-const int index__3 = 10 * 6 - 1;
+const unsigned int index__3 = 10 * 6 - 1;
 const long ctdwn__3 = (15 * 60 + 7) * 1000L; // (ms)
 
 
 
 /***  Global Variables  ***/
+Schedule schedule_5 = Schedule(sch_5, h_or_b5, index_5, ctdwn_5, JASC_5_MSG);
+Schedule schedule_3 = Schedule(sch_3, h_or_b3, index_3, ctdwn_3, JASC_3_MSG);
+Schedule schedule_5british = Schedule(sch_5british, h_or_b5british, index_5british, ctdwn_5british, DOSC_1x5_MSG);
+Schedule schedule__3 = Schedule(sch__3, h_or_b__3, index__3, ctdwn__3, DOSC_3x5_MSG);
+
 
 /*  System State */
 struct SystemState_t {
@@ -272,14 +286,17 @@ struct SystemState_t {
   short selected_sequence;  // countdown sequence selection
   long timer_start_ms;  // system time at sequence start
   long sound_start_ms;  // system time at sound start
+  Schedule* schedule;   // countdown timer schedule
 };
 SystemState_t state;
-
-Schedule schedule;
 
 
 /***  Functions  ***/
 
+/*
+   Prepares the system for timer functionality.
+   Run at power on.
+*/
 void setup() {
 
   // Initialize system
@@ -306,43 +323,65 @@ void setup() {
 
 
 
+/*
+   Writes introductory text to the display.
+*/
+void show_introduction() {
+  display::overwrite("BY CHRIS LABORDE", "");
+  delay(STD_DELAY);
+  display::overwrite("BY CHRIS LABORDE", " & J BERENGUERES");
+  delay(2 * STD_DELAY);
+  display::overwrite("  Select start", "    sequence");
+  delay(STD_DELAY);
+  return;
+}
+
+
+
+/*
+   The command loop that runs the timer.
+   Runs continuously after setup() completes.
+*/
 void loop() {
 
   if (state.is_timer_running) {
-    // Make sounds and display status when the time comes
+    // Perform timer actions, speficially make sounds and display
+    // status at the appropriate times.
     long time_since_start_ms =  millis() - state.timer_start_ms;
-    long time_remaining_ms = schedule.getTimerLength_ms() - time_since_start_ms;
+    long time_remaining_ms = state.schedule->getTimerLength_ms() - time_since_start_ms;
     horn_or_beep(time_remaining_ms);
     display_timer(time_remaining_ms);
   }
 
   // Depending on which button was pushed, we perform an action
   switch (read_LCD_buttons()) {
-    case Button::start_stop: {
-        if (state.is_timer_running) {
-          // Stop timer
-          de_activate_sound(RELAY_HORN);
-          de_activate_sound(RELAY_BEEP);
-          display::overwrite(CANCEL_MSG, "");
-          state.is_timer_running = false;
-        } else {
-          // Start timer
-          set_up_timer_schedule();
-          state.is_horn_on = false;
-          state.is_beep_on = false;
-          state.timer_start_ms = millis();
-          state.is_timer_running = true;
-        }
-        delay(400);  // TODO: Remove after implementing more sophisticated debouncing
-        break;
-      }
+    case Button::start_stop:
+      if (state.is_timer_running) {
 
-    case Button::select: {
-        if (!state.is_timer_running) {
-          increment_sequence_selection();
-        }
-        break;
+        // Timer is running; stop timer
+        de_activate_sound(RELAY_HORN);
+        de_activate_sound(RELAY_BEEP);
+        display::overwrite(CANCEL_MSG, "");
+        state.is_timer_running = false;
+      } else {
+
+        // Timer not running; start timer
+        state.schedule->reset();
+        display::overwrite(STARTING_MSG, state.schedule->getTitle());
+        state.is_horn_on = false;
+        state.is_beep_on = false;
+        state.timer_start_ms = millis();
+        state.is_timer_running = true;
       }
+      delay(400);  // TODO: Remove after implementing more sophisticated debouncing
+      break;
+
+    case Button::select:
+      // If the timer is not running, switch to next countdown sequence
+      if (!state.is_timer_running) {
+        increment_sequence_selection();
+      }
+      break;
 
     // Do-nothing scenarios
     case Button::right:
@@ -351,9 +390,8 @@ void loop() {
       [[fallthrough]]
     case Button::down:
       [[fallthrough]]
-    case Button::none: {
-        break;
-      }
+    case Button::none:
+      break;
   }
 }
 
@@ -361,7 +399,6 @@ void loop() {
 
 void increment_sequence_selection() {
 
-  const char* msg = "";
   display::clear();
 
   state.selected_sequence += 1;
@@ -370,16 +407,16 @@ void increment_sequence_selection() {
   }
 
   if (state.selected_sequence == 0) {
-    msg = JASC_5_MSG;
+    state.schedule = &schedule_5;
   } else if (state.selected_sequence == 1) {
-    msg = JASC_3_MSG;
+    state.schedule = &schedule_3;
   } else if (state.selected_sequence == 2) {
-    msg = DOSC_1x5_MSG;
+    state.schedule = &schedule_5british;
   } else if (state.selected_sequence == 3) {
-    msg = DOSC_3x5_MSG;
+    state.schedule = &schedule__3;
   }
 
-  display::overwrite(msg, "");
+  display::overwrite(state.schedule->getTitle(), "");
 
   return;
 }
@@ -391,7 +428,7 @@ Button read_LCD_buttons() {
   // We add approx 50 to those values and check to see if we are close.
   // We make "nothing" the first option for speed reasons since it will be the most likely result.
 
-  int adc_key_in = analogRead(LCD_BUTTON_PIN);  // read the value from the sensor
+  int adc_key_in = analogRead(kLcdButtonPin);  // read the value from the sensor
   Button button = Button::none;
 
   if (adc_key_in <= 1000) {
@@ -417,39 +454,6 @@ Button read_LCD_buttons() {
   }
 
   return button;
-
-}
-
-
-/*
-
-*/
-void set_up_timer_schedule() {
-  if (state.selected_sequence == 0) {
-    schedule = Schedule(sch_5, h_or_b5, index_5, ctdwn_5, JASC_5_MSG);
-  } else if (state.selected_sequence == 1) {
-    schedule = Schedule(sch_3, h_or_b3, index_3, ctdwn_3, JASC_3_MSG);
-  } else if (state.selected_sequence == 2) {
-    schedule = Schedule(sch_5british, h_or_b5british, index_5british, ctdwn_5british, DOSC_1x5_MSG);
-  } else if (state.selected_sequence == 3) {
-    schedule = Schedule(sch__3, h_or_b__3, index__3, ctdwn__3, DOSC_3x5_MSG);
-  }
-  display::overwrite(STARTING_MSG, schedule.getTitle());
-  return;
-}
-
-
-/*
-   Writes introductory text to the display.
-*/
-void show_introduction() {
-  display::overwrite("BY CHRIS LABORDE", "");
-  delay(STD_DELAY);
-  display::overwrite("BY CHRIS LABORDE", " & J BERENGUERES");
-  delay(3 * STD_DELAY);
-  display::overwrite("  Select start", "    sequence");
-  delay(STD_DELAY);
-  return;
 }
 
 
@@ -488,21 +492,24 @@ void de_activate_sound(const int sound) {
 
 
 
+/*
+   Selects sound to turn on/off and causes the change to happen.
+*/
 void horn_or_beep(const unsigned long time_ms) {
   if (state.is_horn_on || state.is_beep_on) {
-    if ( ((millis() - state.sound_start_ms) > len_of_note[schedule.getSound()] ) ) {
-      de_activate_sound(schedule.getSound());
-      schedule.incrementIndex();
+    if ( ((millis() - state.sound_start_ms) > len_of_note[state.schedule->getSound()] ) ) {
+      de_activate_sound(state.schedule->getSound());
+      state.schedule->incrementIndex();
     }
   } else {
-    unsigned long a_time_ms = (schedule.getSch() * 100);
+    unsigned long a_time_ms = (state.schedule->getSch() * 100);
     //Serial.println("long v = (long) (sch[state.index]*1000);");
     //Serial.println(state.index);
     //Serial.println(s);
     //Serial.println(v);
 
     if (time_ms < a_time_ms + 1000) {
-      activate_sound(schedule.getSound());
+      activate_sound(state.schedule->getSound());
     }
   }
   return;
@@ -519,7 +526,7 @@ void display_timer(const long time_ms) {
   const char* const kHornOnMessage = "H";
   const char* const kBeepOnMessage  = "B";
   const char* const kSoundOffMessage = " ";
-  char text[display::zstringSize];
+  char text[display::kZstringSize];
 
   if (time_ms > -1) {
 
@@ -535,7 +542,7 @@ void display_timer(const long time_ms) {
       msg = kBeepOnMessage;
     }
 
-    snprintf(text, display::zstringSize, " %2d:%02d  %1s        ", minutes, seconds, msg);
+    snprintf(text, display::kZstringSize, " %2d:%02d  %1s        ", minutes, seconds, msg);
     display::overwriteUpper(text);
 
   } else {
