@@ -341,12 +341,18 @@ void show_introduction() {
 /*
    The command loop that runs the timer.
    Runs continuously after setup() completes.
+
+   loop() performs three major, largely independent actions:
+     1.) If the timer is running, it displays the timer status and emits sounds
+     2.) If the start/stop button is pressed, it starts/stops the timer.
+     3.) When the timer is stopped, the selection buttons allows the user to select
+         a specific countdown sequence.
 */
 void loop() {
 
+  // If timer is running, perform the timer actions.  Specifically,
+  // make sounds and display status at the appropriate times.
   if (state.is_timer_running) {
-    // Perform timer actions, speficially make sounds and display
-    // status at the appropriate times.
     long time_since_start_ms =  millis() - state.timer_start_ms;
     long time_remaining_ms = state.schedule->getTimerLength_ms() - time_since_start_ms;
     horn_or_beep(time_remaining_ms);
@@ -497,17 +503,15 @@ void de_activate_sound(const int sound) {
 */
 void horn_or_beep(const unsigned long time_ms) {
   if (state.is_horn_on || state.is_beep_on) {
+    // A sound is on; check if it should be turned off.
     if ( ((millis() - state.sound_start_ms) > len_of_note[state.schedule->getSound()] ) ) {
       de_activate_sound(state.schedule->getSound());
       state.schedule->incrementIndex();
     }
   } else {
+    // No sound is on; check if one should be turned on.
     unsigned long a_time_ms = (state.schedule->getSch() * 100);
-    //Serial.println("long v = (long) (sch[state.index]*1000);");
     //Serial.println(state.index);
-    //Serial.println(s);
-    //Serial.println(v);
-
     if (time_ms < a_time_ms + 1000) {
       activate_sound(state.schedule->getSound());
     }
