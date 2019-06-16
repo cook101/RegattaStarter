@@ -285,10 +285,10 @@ class SystemState {
       initialize();
     };
     ~SystemState() = default;
+    void initialize();
     void startTimer();
     void stopTimer();
-    long getTimeRemaining_ms();
-    void initialize();
+    long getTimeRemaining_ms() const;
     bool isTimerRunning() const;
     bool isSoundOn() const;
     bool isHornOn() const;
@@ -297,15 +297,16 @@ class SystemState {
     void setBeepOn();
     void setHornOff();
     void setBeepOff();
+    long getTimeSinceSoundStart() const;
 
   public:
-    long sound_start_ms;  // system time at sound start
     short selected_sequence;  // countdown sequence selection
     Schedule* schedule;   // countdown timer schedule
 
   private:
     bool is_horn_on;  // horn to signal to racers
     bool is_beep_on;  // race committee warning beep
+    long sound_start_ms;  // system time at sound start
     bool is_timer_running;
     long timer_start_ms;  // system time at sequence start
 };
@@ -332,7 +333,7 @@ void SystemState::stopTimer() {
   is_timer_running = false;
 }
 
-long SystemState::getTimeRemaining_ms() {
+long SystemState::getTimeRemaining_ms() const {
   long time_since_start_ms =  millis() - timer_start_ms;
   return schedule->getTimerLength_ms() - time_since_start_ms;
 }
@@ -370,7 +371,15 @@ void SystemState::setHornOff() {
 void SystemState::setBeepOff() {
   is_beep_on = false;
 }
+
+long SystemState::getTimeSinceSoundStart() const {
+  return millis() - sound_start_ms;
+}
+
+
+
 SystemState state;
+
 
 
 /***  Functions  ***/
@@ -575,7 +584,7 @@ void de_activate_sound(const int sound) {
 void horn_or_beep(const unsigned long time_ms) {
   if (state.isSoundOn()) {
     // A sound is on; check if it should be turned off.
-    if ( ((millis() - state.sound_start_ms) > len_of_note[state.schedule->getSound()] ) ) {
+    if ( state.getTimeSinceSoundStart() > static_cast<int>(len_of_note[state.schedule->getSound()]) ) {
       de_activate_sound(state.schedule->getSound());
       state.schedule->incrementIndex();
     }
