@@ -161,12 +161,12 @@ void overwriteLower(const char* const lower) {
 
 
 // Messages (LCD is 2x16 characters)
-const char* const STARTING_MSG = " ...STARTING... ";
-const char* const JASC_5_MSG   = "JASC 1x5 min    ";
-const char* const JASC_3_MSG   = "JASC 1x3 min    ";
-const char* const DOSC_1x5_MSG = "DOSC 1x5 min    ";
-const char* const DOSC_3x5_MSG = "DOSC 3x5 min    ";
-const char* const CANCEL_MSG   = "SEQ. CANCELLED  ";
+const char* const kStartingMessage = " ...STARTING... ";
+const char* const kCancelMessage   = "Timer Cancelled ";
+const char* const JASC_5_MSG       = "JASC 1x5 min    ";
+const char* const JASC_3_MSG       = "JASC 1x3 min    ";
+const char* const DOSC_1x5_MSG     = "DOSC 1x5 min    ";
+const char* const DOSC_3x5_MSG     = "DOSC 3x5 min    ";
 
 
 // Horn sequences
@@ -174,10 +174,10 @@ const char* const CANCEL_MSG   = "SEQ. CANCELLED  ";
 // Short seq countdown // 10lb  5sh   5blank  3lh
 
 // Time lengths
-const int STD_DELAY = 300; // (ms)
+const int kStandardDelay = 300; // (ms)
 const unsigned long len_of_note[] = {500, 400, 800, 1500}; // (ms)
 
-const int NUMBER_OF_SEQUENCES = 4;
+const int kNumSequences = 4;
 
 // Sound names
 const int WARNING_BEEP = 0;
@@ -279,16 +279,98 @@ Schedule schedule__3 = Schedule(sch__3, h_or_b__3, index__3, ctdwn__3, DOSC_3x5_
 
 
 /*  System State */
-struct SystemState_t {
-  bool is_timer_running;
-  bool is_horn_on;  // horn to signal to racers
-  bool is_beep_on;  // race committee warning beep
-  short selected_sequence;  // countdown sequence selection
-  long timer_start_ms;  // system time at sequence start
-  long sound_start_ms;  // system time at sound start
-  Schedule* schedule;   // countdown timer schedule
+class SystemState {
+  public:
+    SystemState() {
+      initialize();
+    };
+    ~SystemState() = default;
+    void startTimer();
+    void stopTimer();
+    long getTimeRemaining_ms();
+    void initialize();
+    bool isTimerRunning() const;
+    bool isSoundOn() const;
+    bool isHornOn() const;
+    bool isBeepOn() const;
+    void setHornOn();
+    void setBeepOn();
+    void setHornOff();
+    void setBeepOff();
+
+  public:
+    long sound_start_ms;  // system time at sound start
+    short selected_sequence;  // countdown sequence selection
+    Schedule* schedule;   // countdown timer schedule
+
+  private:
+    bool is_horn_on;  // horn to signal to racers
+    bool is_beep_on;  // race committee warning beep
+    bool is_timer_running;
+    long timer_start_ms;  // system time at sequence start
 };
-SystemState_t state;
+
+void SystemState::initialize() {
+  is_timer_running = false;
+  is_horn_on = false;
+  is_beep_on = false;
+  selected_sequence = 0;
+  timer_start_ms = -1;
+  sound_start_ms = -1;
+}
+
+void SystemState::startTimer() {
+  schedule->reset();
+  is_horn_on = false;
+  is_beep_on = false;
+  timer_start_ms = millis();
+  is_timer_running = true;
+  return;
+}
+
+void SystemState::stopTimer() {
+  is_timer_running = false;
+}
+
+long SystemState::getTimeRemaining_ms() {
+  long time_since_start_ms =  millis() - timer_start_ms;
+  return schedule->getTimerLength_ms() - time_since_start_ms;
+}
+
+bool SystemState::isTimerRunning() const {
+  return is_timer_running;
+}
+
+bool SystemState::isSoundOn() const {
+  return is_horn_on || is_beep_on;
+}
+
+bool SystemState::isHornOn() const {
+  return is_horn_on;
+}
+
+bool SystemState::isBeepOn() const {
+  return is_beep_on;
+}
+
+void SystemState::setHornOn() {
+  is_horn_on = true;
+  sound_start_ms = millis();
+}
+
+void SystemState::setBeepOn() {
+  is_beep_on = true;
+  sound_start_ms = millis();
+}
+
+void SystemState::setHornOff() {
+  is_horn_on = false;
+}
+
+void SystemState::setBeepOff() {
+  is_beep_on = false;
+}
+SystemState state;
 
 
 /***  Functions  ***/
@@ -299,13 +381,8 @@ SystemState_t state;
 */
 void setup() {
 
-  // Initialize system
-  state.is_timer_running = false;
-  state.is_horn_on = false;
-  state.is_beep_on = false;
-  state.selected_sequence = 0;
-  state.timer_start_ms = -1;
-  state.sound_start_ms = -1;
+  // Initialize system state
+  state.initialize();
 
   // Initialize sound relays
   Horn::initialize();
@@ -328,11 +405,11 @@ void setup() {
 */
 void show_introduction() {
   display::overwrite("BY CHRIS LABORDE", "");
-  delay(STD_DELAY);
+  delay(kStandardDelay);
   display::overwrite("BY CHRIS LABORDE", " & J BERENGUERES");
-  delay(2 * STD_DELAY);
+  delay(2 * kStandardDelay);
   display::overwrite("  Select start", "    sequence");
-  delay(STD_DELAY);
+  delay(kStandardDelay);
   return;
 }
 
@@ -352,9 +429,8 @@ void loop() {
 
   // If timer is running, perform the timer actions.  Specifically,
   // make sounds and display status at the appropriate times.
-  if (state.is_timer_running) {
-    long time_since_start_ms =  millis() - state.timer_start_ms;
-    long time_remaining_ms = state.schedule->getTimerLength_ms() - time_since_start_ms;
+  if (state.isTimerRunning()) {
+    long time_remaining_ms = state.getTimeRemaining_ms();
     horn_or_beep(time_remaining_ms);
     display_timer(time_remaining_ms);
   }
@@ -362,29 +438,25 @@ void loop() {
   // Depending on which button was pushed, we perform an action
   switch (read_LCD_buttons()) {
     case Button::start_stop:
-      if (state.is_timer_running) {
+      if (state.isTimerRunning()) {
 
         // Timer is running; stop timer
+        display::overwrite(kCancelMessage, "");
         de_activate_sound(RELAY_HORN);
         de_activate_sound(RELAY_BEEP);
-        display::overwrite(CANCEL_MSG, "");
-        state.is_timer_running = false;
+        state.stopTimer();
       } else {
 
         // Timer not running; start timer
-        state.schedule->reset();
-        display::overwrite(STARTING_MSG, state.schedule->getTitle());
-        state.is_horn_on = false;
-        state.is_beep_on = false;
-        state.timer_start_ms = millis();
-        state.is_timer_running = true;
+        state.startTimer();
+        display::overwrite(kStartingMessage, state.schedule->getTitle());
       }
       delay(400);  // TODO: Remove after implementing more sophisticated debouncing
       break;
 
     case Button::select:
       // If the timer is not running, switch to next countdown sequence
-      if (!state.is_timer_running) {
+      if (!state.isTimerRunning()) {
         increment_sequence_selection();
       }
       break;
@@ -408,7 +480,7 @@ void increment_sequence_selection() {
   display::clear();
 
   state.selected_sequence += 1;
-  if (state.selected_sequence >= NUMBER_OF_SEQUENCES) {
+  if (state.selected_sequence >= kNumSequences) {
     state.selected_sequence = 0;
   }
 
@@ -471,12 +543,11 @@ void activate_sound(const int sound) {
   // check what instrument to sound
   if (sound == WARNING_BEEP) {
     Beep::turnOn();
-    state.is_beep_on = true;
+    state.setBeepOn();
   } else {
     Horn::turnOn();
-    state.is_horn_on = true;
+    state.setHornOn();
   }
-  state.sound_start_ms = millis();
   return;
 }
 
@@ -488,10 +559,10 @@ void activate_sound(const int sound) {
 void de_activate_sound(const int sound) {
   if (sound == WARNING_BEEP) {
     Beep::turnOff();
-    state.is_beep_on = false;
+    state.setBeepOff();
   } else {
     Horn::turnOff();
-    state.is_horn_on = false;
+    state.setHornOff();
   }
   return;
 }
@@ -502,7 +573,7 @@ void de_activate_sound(const int sound) {
    Selects sound to turn on/off and causes the change to happen.
 */
 void horn_or_beep(const unsigned long time_ms) {
-  if (state.is_horn_on || state.is_beep_on) {
+  if (state.isSoundOn()) {
     // A sound is on; check if it should be turned off.
     if ( ((millis() - state.sound_start_ms) > len_of_note[state.schedule->getSound()] ) ) {
       de_activate_sound(state.schedule->getSound());
@@ -527,9 +598,12 @@ void horn_or_beep(const unsigned long time_ms) {
 */
 void display_timer(const long time_ms) {
 
+  // Sound status sub-strings
   const char* const kHornOnMessage = "H";
   const char* const kBeepOnMessage  = "B";
   const char* const kSoundOffMessage = " ";
+
+  // String that will be displayed
   char text[display::kZstringSize];
 
   if (time_ms > -1) {
@@ -540,9 +614,9 @@ void display_timer(const long time_ms) {
     int minutes = (time_ms / 1000) / 60;
 
     const char* msg = kSoundOffMessage;
-    if (state.is_horn_on) {
+    if (state.isHornOn()) {
       msg = kHornOnMessage;
-    } else if (state.is_beep_on) {
+    } else if (state.isBeepOn()) {
       msg = kBeepOnMessage;
     }
 
