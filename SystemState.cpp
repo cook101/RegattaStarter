@@ -1,10 +1,9 @@
 /*
-   Countdown Schedule
+   Regatta Starter System State
 
-   This class is used to wrap the countdown schedule so that it cannot
-   become unsynchronized.  Once the constructor has been called, the
-   only possible interactions are to get information about the next step
-   in the schedule and to move the schedule a step forward.
+   This class is used to keep coherent the internal state of the system.
+   The class does not perform any actions with the hardware; it provides
+   solely a means to track the state machine.
 */
 
 #include "SystemState.hpp"
