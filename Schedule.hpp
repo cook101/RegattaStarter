@@ -7,6 +7,8 @@
    in the schedule and to move the schedule a step forward.
 */
 
+#pragma once
+
 class Schedule {
   public:
     Schedule(const unsigned long* sch, const int* h_or_b, const unsigned int &size_schedule, 
