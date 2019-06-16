@@ -298,12 +298,11 @@ class SystemState {
     void setHornOff();
     void setBeepOff();
     long getTimeSinceSoundStart() const;
-
-  public:
-    short selected_sequence;  // countdown sequence selection
-    Schedule* schedule;   // countdown timer schedule
+    void setSchedule(Schedule& sched);
+    Schedule* getSchedule();
 
   private:
+    Schedule* schedule;   // countdown timer schedule
     bool is_horn_on;  // horn to signal to racers
     bool is_beep_on;  // race committee warning beep
     long sound_start_ms;  // system time at sound start
@@ -315,7 +314,6 @@ void SystemState::initialize() {
   is_timer_running = false;
   is_horn_on = false;
   is_beep_on = false;
-  selected_sequence = 0;
   timer_start_ms = -1;
   sound_start_ms = -1;
 }
@@ -374,6 +372,14 @@ void SystemState::setBeepOff() {
 
 long SystemState::getTimeSinceSoundStart() const {
   return millis() - sound_start_ms;
+}
+
+void SystemState::setSchedule(Schedule& sched) {
+  schedule = &sched;
+}
+
+Schedule* SystemState::getSchedule() {
+  return schedule;
 }
 
 
@@ -458,7 +464,7 @@ void loop() {
 
         // Timer not running; start timer
         state.startTimer();
-        display::overwrite(kStartingMessage, state.schedule->getTitle());
+        display::overwrite(kStartingMessage, state.getSchedule()->getTitle());
       }
       delay(400);  // TODO: Remove after implementing more sophisticated debouncing
       break;
@@ -483,27 +489,32 @@ void loop() {
 }
 
 
-
+/*
+   increment_sequence_selection()
+   Switches through the available timer schedules that the
+   system can follow.
+*/
 void increment_sequence_selection() {
 
+  static short selected_sequence = -1;  // countdown sequence selection
   display::clear();
 
-  state.selected_sequence += 1;
-  if (state.selected_sequence >= kNumSequences) {
-    state.selected_sequence = 0;
+  selected_sequence += 1;
+  if (selected_sequence >= kNumSequences) {
+    selected_sequence = 0;
   }
 
-  if (state.selected_sequence == 0) {
-    state.schedule = &schedule_5;
-  } else if (state.selected_sequence == 1) {
-    state.schedule = &schedule_3;
-  } else if (state.selected_sequence == 2) {
-    state.schedule = &schedule_5british;
-  } else if (state.selected_sequence == 3) {
-    state.schedule = &schedule__3;
+  if (selected_sequence == 0) {
+    state.setSchedule(schedule_5);
+  } else if (selected_sequence == 1) {
+    state.setSchedule(schedule_3);
+  } else if (selected_sequence == 2) {
+    state.setSchedule(schedule_5british);
+  } else if (selected_sequence == 3) {
+    state.setSchedule(schedule__3);
   }
 
-  display::overwrite(state.schedule->getTitle(), "");
+  display::overwrite(state.getSchedule()->getTitle(), "");
 
   return;
 }
@@ -584,16 +595,16 @@ void de_activate_sound(const int sound) {
 void horn_or_beep(const unsigned long time_ms) {
   if (state.isSoundOn()) {
     // A sound is on; check if it should be turned off.
-    if ( state.getTimeSinceSoundStart() > static_cast<int>(len_of_note[state.schedule->getSound()]) ) {
-      de_activate_sound(state.schedule->getSound());
-      state.schedule->incrementIndex();
+    if ( state.getTimeSinceSoundStart() > static_cast<int>(len_of_note[state.getSchedule()->getSound()]) ) {
+      de_activate_sound(state.getSchedule()->getSound());
+      state.getSchedule()->incrementIndex();
     }
   } else {
     // No sound is on; check if one should be turned on.
-    unsigned long a_time_ms = (state.schedule->getSch() * 100);
+    unsigned long a_time_ms = (state.getSchedule()->getSch() * 100);
     //Serial.println(state.index);
     if (time_ms < a_time_ms + 1000) {
-      activate_sound(state.schedule->getSound());
+      activate_sound(state.getSchedule()->getSound());
     }
   }
   return;
