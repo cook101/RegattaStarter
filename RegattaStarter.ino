@@ -288,7 +288,7 @@ SystemState state;
 
 /*
    Prepares the system for timer functionality.
-   Run at power on.
+   Runs once at power on.
 */
 void setup() {
 
@@ -303,6 +303,7 @@ void setup() {
   display::initialize();
   display::backlightOn();
 
+  // Write introductory text to the display
   show_introduction();
 
   return;
@@ -385,6 +386,7 @@ void loop() {
 }
 
 
+
 /*
    increment_sequence_selection()
    Switches through the available timer schedules that the
@@ -416,6 +418,10 @@ void increment_sequence_selection() {
 }
 
 
+/*
+ *  read_LCD-buttons()
+ *  Determines if a button has been pressed.
+ */
 Button read_LCD_buttons() {
 
   // My V1.1 buttons when read are centered at these values: 0, 144, 329, 504, 741.
@@ -453,6 +459,28 @@ Button read_LCD_buttons() {
 
 
 /*
+   Selects sound to turn on/off and causes the change to happen.
+*/
+void horn_or_beep(const unsigned long time_ms) {
+  if (state.isSoundOn()) {
+    // A sound is on; check if it should be turned off.
+    if ( state.getTimeSinceSoundStart() > static_cast<int>(len_of_note[state.getSchedule()->getSound()]) ) {
+      de_activate_sound(state.getSchedule()->getSound());
+      state.getSchedule()->incrementIndex();
+    }
+  } else {
+    // No sound is on; check if one should be turned on.
+    unsigned long a_time_ms = (state.getSchedule()->getSch() * 100);
+    if (time_ms < a_time_ms + 1000) {
+      activate_sound(state.getSchedule()->getSound());
+    }
+  }
+  return;
+}
+
+
+
+/*
    Turns on a sound.
 */
 void activate_sound(const int sound) {
@@ -483,28 +511,6 @@ void de_activate_sound(const int sound) {
   return;
 }
 
-
-
-/*
-   Selects sound to turn on/off and causes the change to happen.
-*/
-void horn_or_beep(const unsigned long time_ms) {
-  if (state.isSoundOn()) {
-    // A sound is on; check if it should be turned off.
-    if ( state.getTimeSinceSoundStart() > static_cast<int>(len_of_note[state.getSchedule()->getSound()]) ) {
-      de_activate_sound(state.getSchedule()->getSound());
-      state.getSchedule()->incrementIndex();
-    }
-  } else {
-    // No sound is on; check if one should be turned on.
-    unsigned long a_time_ms = (state.getSchedule()->getSch() * 100);
-    //Serial.println(state.index);
-    if (time_ms < a_time_ms + 1000) {
-      activate_sound(state.getSchedule()->getSound());
-    }
-  }
-  return;
-}
 
 
 /*
