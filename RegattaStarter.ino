@@ -13,63 +13,23 @@
 
 #include <LiquidCrystal.h>
 
+#include "RelayInterface.hpp"
 #include "Schedule.hpp"
 #include "SystemState.hpp"
 
 
 /*
-   Interface to the button hardware.
+   Interfaces to the sound hardware.
+   The Horn and Bell classes define a private pin number for the
+   relay hardware and will be called as static methods without
+   instantiation of an object.
 */
-// Pins
-const int kLcdButtonPin = 0;
-
-// Button enumerations
-enum class Button : uint8_t {
-  right  = 0,
-  up     = 1,
-  down   = 2,
-  left   = 3,
-  select = 4,
-  none   = 5,
-  start_stop = left,
-};
-
-
-
-/*
-   Interface to the sound hardware.
-   There is a SoundInterface base class that is not intended
-   for use but provides the interface functions.  The Horn
-   and Bell classes define a private pin number for the
-   hardware and are intended for use.
-*/
-class SoundInterface {
-  public:
-    SoundInterface() = delete;
-    ~SoundInterface();
-    static void initialize();
-    static void turnOn();
-    static void turnOff();
-    // static bool isOn();
-  protected:
-    static const int kRelayPin = -1;
-};
-void SoundInterface::initialize() {
-  pinMode(kRelayPin, OUTPUT);
-};
-void SoundInterface::turnOn() {
-  digitalWrite(kRelayPin, HIGH);
-}
-void SoundInterface::turnOff() {
-  digitalWrite(kRelayPin, LOW);
-}
-
-class Horn: public SoundInterface {
+class Horn: public RelayInterface {
   protected:
     static const int kRelayPin = 11;
 };
 
-class Beep: public SoundInterface {
+class Beep: public RelayInterface {
   protected:
     static const int kRelayPin = 2;
 };
@@ -161,6 +121,25 @@ void overwriteLower(const char* const lower) {
 
 
 
+/*
+   Interface to the button hardware.
+*/
+// Pins
+const int kLcdButtonPin = 0;
+
+// Button enumerations
+enum class Button : uint8_t {
+  right  = 0,
+  up     = 1,
+  down   = 2,
+  left   = 3,
+  select = 4,
+  none   = 5,
+  start_stop = left,
+};
+
+
+
 // Messages (LCD is 2x16 characters)
 const char* const kStartingMessage = " ...STARTING... ";
 const char* const kCancelMessage   = "Timer Cancelled ";
@@ -176,7 +155,7 @@ const char* const DOSC_3x5_MSG     = "DOSC 3x5 min    ";
 
 // Time lengths
 const int kStandardDelay = 300; // (ms)
-const unsigned long len_of_note[] = {500, 400, 800, 1500}; // (ms)
+const unsigned long kLengthOfNote[] = {500, 400, 800, 1500}; // (ms)
 
 const int kNumSequences = 4;
 
@@ -273,11 +252,12 @@ const long ctdwn__3 = (15 * 60 + 7) * 1000L; // (ms)
 
 
 /***  Global Variables  ***/
+
+/* Timer schedules */
 Schedule schedule_5 = Schedule(sch_5, h_or_b5, index_5, ctdwn_5, JASC_5_MSG);
 Schedule schedule_3 = Schedule(sch_3, h_or_b3, index_3, ctdwn_3, JASC_3_MSG);
 Schedule schedule_5british = Schedule(sch_5british, h_or_b5british, index_5british, ctdwn_5british, DOSC_1x5_MSG);
 Schedule schedule__3 = Schedule(sch__3, h_or_b__3, index__3, ctdwn__3, DOSC_3x5_MSG);
-
 
 /*  System State */
 SystemState state;
@@ -419,9 +399,9 @@ void increment_sequence_selection() {
 
 
 /*
- *  read_LCD-buttons()
- *  Determines if a button has been pressed.
- */
+    read_LCD-buttons()
+    Determines if a button has been pressed.
+*/
 Button read_LCD_buttons() {
 
   // My V1.1 buttons when read are centered at these values: 0, 144, 329, 504, 741.
@@ -464,7 +444,7 @@ Button read_LCD_buttons() {
 void horn_or_beep(const unsigned long time_ms) {
   if (state.isSoundOn()) {
     // A sound is on; check if it should be turned off.
-    if ( state.getTimeSinceSoundStart() > static_cast<int>(len_of_note[state.getSchedule()->getSound()]) ) {
+    if ( state.getTimeSinceSoundStart() > static_cast<int>(kLengthOfNote[state.getSchedule()->getSound()]) ) {
       de_activate_sound(state.getSchedule()->getSound());
       state.getSchedule()->incrementIndex();
     }
